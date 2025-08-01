@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1640995200000,
+    "name": "Bananas",
+    "category": "produce",
+    "completed": false,
+    "dateAdded": "2024-01-01T10:00:00.000Z",
+    "fromStandard": false
+  },
+  {
+    "id": 1640995260000,
+    "name": "Milk",
+    "category": "dairy", 
+    "completed": false,
+    "dateAdded": "2024-01-01T10:01:00.000Z",
+    "fromStandard": true
+  },
+  {
+    "id": 1640995320000,
+    "name": "Bread",
+    "category": "bakery",
+    "completed": true,
+    "dateAdded": "2024-01-01T10:02:00.000Z",
+    "fromStandard": false
+  }
+]
