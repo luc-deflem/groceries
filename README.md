@@ -1,2 +1,0 @@
-# groceries
-groceries
