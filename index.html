@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Grocery List">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="manifest" href="manifest.json">
+    <title>Grocery List MVP</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🛒 Grocery Manager</h1>
+        </header>
+        
+        <nav class="tab-navigation">
+            <button class="tab-button active" data-tab="shopping">🛒 Shopping List</button>
+            <button class="tab-button" data-tab="pantry">🏠 Pantry Stock</button>
+            <button class="tab-button" data-tab="categories">⚙️ Categories</button>
+        </nav>
+        
+        <main>
+            <!-- Shopping List Tab -->
+            <div class="tab-content active" id="shopping-tab">
+                <div class="add-item-section">
+                    <input type="text" id="itemInput" placeholder="Add grocery item..." maxlength="100">
+                    <select id="categorySelect">
+                        <option value="produce">🥬 Produce</option>
+                        <option value="dairy">🥛 Dairy</option>
+                        <option value="meat">🥩 Meat</option>
+                        <option value="pantry">🥫 Pantry</option>
+                        <option value="frozen">🧊 Frozen</option>
+                        <option value="bakery">🍞 Bakery</option>
+                        <option value="other">📦 Other</option>
+                    </select>
+                    <button id="addBtn">Add</button>
+                </div>
+                
+                <div class="list-stats">
+                    <span id="itemCount">0 items</span>
+                    <button id="clearCompleted">Clear Completed</button>
+                </div>
+                
+                <div class="grocery-list" id="groceryList">
+                    <!-- Shopping items will be dynamically added here -->
+                </div>
+            </div>
+
+            <!-- Pantry Stock Tab -->
+            <div class="tab-content" id="pantry-tab">
+                <div class="add-standard-item-section">
+                    <input type="text" id="standardItemInput" placeholder="Add standard grocery item..." maxlength="100">
+                    <select id="standardCategorySelect">
+                        <option value="produce">🥬 Produce</option>
+                        <option value="dairy">🥛 Dairy</option>
+                        <option value="meat">🥩 Meat</option>
+                        <option value="pantry">🥫 Pantry</option>
+                        <option value="frozen">🧊 Frozen</option>
+                        <option value="bakery">🍞 Bakery</option>
+                        <option value="other">📦 Other</option>
+                    </select>
+                    <button id="addStandardBtn">Add to Pantry</button>
+                </div>
+                
+                <div class="pantry-actions">
+                    <button id="addAllUnstocked">Add All Out-of-Stock to Shopping List</button>
+                </div>
+                
+                <div class="standard-list" id="standardList">
+                    <!-- Standard items will be dynamically added here -->
+                </div>
+            </div>
+
+            <!-- Categories Management Tab -->
+            <div class="tab-content" id="categories-tab">
+                <div class="add-category-section">
+                    <input type="text" id="categoryInput" placeholder="Add new category..." maxlength="50">
+                    <input type="text" id="categoryEmojiInput" placeholder="🏷️" maxlength="10">
+                    <button id="addCategoryBtn">Add Category</button>
+                </div>
+                
+                <div class="category-help">
+                    <p><strong>Shop Order:</strong> Drag categories to match your store's layout for optimal shopping flow.</p>
+                </div>
+
+                
+                <div class="categories-list" id="categoriesList">
+                    <!-- Categories will be dynamically added here -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Change Category Modal -->
+    <div id="changeCategoryModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title">Change Category</span>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <label for="newCategorySelect">Select new category for "<span id="itemNameSpan"></span>":</label>
+                <select id="newCategorySelect">
+                    <!-- Options will be populated dynamically -->
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn secondary" id="cancelChangeCategory">Cancel</button>
+                <button class="modal-btn primary" id="confirmChangeCategory">Change Category</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="app.js"></script>
+</body>
+</html>

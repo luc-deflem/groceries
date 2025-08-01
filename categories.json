@@ -1,0 +1,51 @@
+[
+  {
+    "id": "produce",
+    "name": "produce", 
+    "emoji": "🥬",
+    "order": 0,
+    "isDefault": true
+  },
+  {
+    "id": "dairy",
+    "name": "dairy",
+    "emoji": "🥛", 
+    "order": 1,
+    "isDefault": true
+  },
+  {
+    "id": "meat",
+    "name": "meat",
+    "emoji": "🥩",
+    "order": 2,
+    "isDefault": true
+  },
+  {
+    "id": "pantry",
+    "name": "pantry",
+    "emoji": "🥫",
+    "order": 3,
+    "isDefault": true
+  },
+  {
+    "id": "frozen",
+    "name": "frozen",
+    "emoji": "🧊",
+    "order": 4,
+    "isDefault": true
+  },
+  {
+    "id": "bakery",
+    "name": "bakery", 
+    "emoji": "🍞",
+    "order": 5,
+    "isDefault": true
+  },
+  {
+    "id": "other",
+    "name": "other",
+    "emoji": "📦",
+    "order": 6,
+    "isDefault": true
+  }
+]
