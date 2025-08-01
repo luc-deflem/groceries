@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-title" content="Grocery List">
     <link rel="apple-touch-icon" href="icon-192.png">
     <link rel="manifest" href="manifest.json">
-    <title>Grocery List MVP 3</title>
+    <title>Grocery List MVP</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -85,6 +85,18 @@
                 
                 <div class="category-help">
                     <p><strong>Shop Order:</strong> Drag categories to match your store's layout for optimal shopping flow.</p>
+                </div>
+
+                <div class="sync-section">
+                    <h3>📱 Device Sync</h3>
+                    <div class="sync-actions">
+                        <button id="exportDataBtn" class="sync-btn">📤 Export to "grocery-data.json"</button>
+                        <button id="importDataBtn" class="sync-btn secondary">📥 Import from "grocery-data.json"</button>
+                        <input type="file" id="importFileInput" accept=".json" style="display: none;">
+                    </div>
+                    <div class="sync-info">
+                        <p><small>Export on one device, then import on another to sync your grocery lists and pantry.</small></p>
+                    </div>
                 </div>
 
                 

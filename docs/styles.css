@@ -187,6 +187,69 @@ main {
     font-size: 14px;
 }
 
+/* Device Sync Section */
+.sync-section {
+    background: #fff3cd;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 25px;
+    border-left: 4px solid #ffc107;
+}
+
+.sync-section h3 {
+    margin: 0 0 15px 0;
+    color: #856404;
+    font-size: 18px;
+}
+
+.sync-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.sync-btn {
+    padding: 12px 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s;
+    background: #28a745;
+    color: white;
+    flex: 1;
+    min-width: 200px;
+}
+
+.sync-btn:hover {
+    background: #218838;
+}
+
+.sync-btn.secondary {
+    background: #17a2b8;
+}
+
+.sync-btn.secondary:hover {
+    background: #138496;
+}
+
+.sync-btn:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+}
+
+.sync-info {
+    margin: 0;
+}
+
+.sync-info p {
+    margin: 0;
+    color: #856404;
+    font-size: 13px;
+}
+
 
 .category-item {
     display: flex;

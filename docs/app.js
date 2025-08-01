@@ -5,20 +5,19 @@ class GroceryApp {
         
         this.currentTab = 'shopping';
         this.currentEditingItem = null;
-        this.dataLoaded = false;
         
+        // Load data directly from localStorage (with sample data for new users)
+        this.shoppingItems = this.loadShoppingItems();
+        this.standardItems = this.loadStandardItems();
+        this.categories = this.loadCategories();
+        
+        this.initializeDefaultCategories();
         this.initializeElements();
         this.attachEventListeners();
+        this.render();
         
-        // Load data from JSON files first, then fallback to localStorage
-        this.loadAllData().then(() => {
-            this.dataLoaded = true;
-            this.initializeDefaultCategories();
-            this.updateCategorySelects();
-            this.render();
-            console.log('🛒 Grocery Manager initialized with file-based storage');
-            console.log(`📊 Data loaded: ${this.shoppingItems.length} shopping items, ${this.standardItems.length} pantry items, ${this.categories.length} categories`);
-        });
+        console.log('🛒 Grocery Manager initialized with localStorage');
+        console.log(`📊 Data loaded: ${this.shoppingItems.length} shopping items, ${this.standardItems.length} pantry items, ${this.categories.length} categories`);
     }
 
     initializeDefaultCategories() {
@@ -62,6 +61,11 @@ class GroceryApp {
         this.addCategoryBtn = document.getElementById('addCategoryBtn');
         this.categoriesList = document.getElementById('categoriesList');
 
+        // Sync elements
+        this.exportDataBtn = document.getElementById('exportDataBtn');
+        this.importDataBtn = document.getElementById('importDataBtn');
+        this.importFileInput = document.getElementById('importFileInput');
+
 
         // Modal elements
         this.changeCategoryModal = document.getElementById('changeCategoryModal');
@@ -97,6 +101,11 @@ class GroceryApp {
         this.categoryInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') this.addCategory();
         });
+
+        // Sync events
+        this.exportDataBtn.addEventListener('click', () => this.exportData());
+        this.importDataBtn.addEventListener('click', () => this.importFileInput.click());
+        this.importFileInput.addEventListener('change', (e) => this.handleFileImport(e));
 
 
         // Modal events
@@ -719,59 +728,121 @@ class GroceryApp {
         return div.innerHTML;
     }
 
-    // Data Loading Methods (JSON Files + localStorage Fallback)
-    async loadAllData() {
+    // Storage Methods - Pure localStorage with Sample Data for New Users
+    loadShoppingItems() {
         try {
-            console.log('📁 Loading data from JSON files...');
+            let saved = localStorage.getItem('shoppingItems');
             
-            // Load all data files in parallel
-            const [shoppingData, pantryData, categoriesData] = await Promise.all([
-                this.loadJsonFile('shopping-items.json'),
-                this.loadJsonFile('pantry-items.json'), 
-                this.loadJsonFile('categories.json')
-            ]);
-
-            this.shoppingItems = shoppingData || [];
-            this.standardItems = pantryData || [];
-            this.categories = categoriesData || [];
-
-            console.log('✅ Data loaded from JSON files successfully');
-        } catch (error) {
-            console.warn('📁 JSON files not accessible (likely mobile/file:// restriction), loading from localStorage...', error);
-            
-            // Fallback to localStorage
-            this.shoppingItems = this.loadShoppingItemsFromStorage();
-            this.standardItems = this.loadStandardItemsFromStorage();
-            this.categories = this.loadCategoriesFromStorage();
-            
-            // If localStorage is also empty, provide some sample data for mobile
-            if (this.shoppingItems.length === 0 && this.standardItems.length === 0) {
-                console.log('📱 Mobile detected with no data - loading sample data');
-                this.loadSampleData();
+            // Try backup if main data is corrupted
+            if (!saved || saved === 'null') {
+                saved = localStorage.getItem('shoppingItems_backup');
+                console.log('Loaded shopping items from localStorage backup');
             }
             
-            console.log('✅ Data loaded from localStorage fallback');
+            let items = saved ? JSON.parse(saved) : [];
+            
+            // Provide sample data for new users
+            if (items.length === 0 && !localStorage.getItem('shoppingItems_initialized')) {
+                items = this.getSampleShoppingItems();
+                localStorage.setItem('shoppingItems_initialized', 'true');
+                console.log('📱 New user - loaded sample shopping items');
+            }
+            
+            console.log(`📦 Loaded ${items.length} shopping items from localStorage`);
+            return items;
+        } catch (e) {
+            console.error('Could not load shopping items from localStorage:', e);
+            return this.getSampleShoppingItems();
         }
     }
 
-    async loadJsonFile(filename) {
+    loadStandardItems() {
         try {
-            const response = await fetch(filename);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+            let saved = localStorage.getItem('standardItems');
+            
+            // Try backup if main data is corrupted
+            if (!saved || saved === 'null') {
+                saved = localStorage.getItem('standardItems_backup');
+                console.log('Loaded pantry items from localStorage backup');
             }
-            const data = await response.json();
-            console.log(`📄 Loaded ${filename}: ${data.length} items`);
-            return data;
-        } catch (error) {
-            console.warn(`⚠️ Could not load ${filename}:`, error.message);
-            throw error;
+            
+            let items = saved ? JSON.parse(saved) : [];
+            
+            // Provide sample data for new users
+            if (items.length === 0 && !localStorage.getItem('standardItems_initialized')) {
+                items = this.getSamplePantryItems();
+                localStorage.setItem('standardItems_initialized', 'true');
+                console.log('📱 New user - loaded sample pantry items');
+            }
+            
+            console.log(`📦 Loaded ${items.length} pantry items from localStorage`);
+            return items;
+        } catch (e) {
+            console.error('Could not load standard items from localStorage:', e);
+            return this.getSamplePantryItems();
         }
     }
 
-    loadSampleData() {
-        // Sample shopping items
-        this.shoppingItems = [
+    loadCategories() {
+        try {
+            let saved = localStorage.getItem('categories');
+            
+            // Try backup if main data is corrupted
+            if (!saved || saved === 'null') {
+                saved = localStorage.getItem('categories_backup');
+                console.log('Loaded categories from localStorage backup');
+            }
+            
+            const categories = saved ? JSON.parse(saved) : [];
+            console.log(`📦 Loaded ${categories.length} categories from localStorage`);
+            return categories;
+        } catch (e) {
+            console.error('Could not load categories from localStorage:', e);
+            return [];
+        }
+    }
+
+    saveShoppingItems() {
+        try {
+            const data = JSON.stringify(this.shoppingItems);
+            localStorage.setItem('shoppingItems', data);
+            localStorage.setItem('shoppingItems_backup', data);
+            localStorage.setItem('shoppingItems_timestamp', new Date().toISOString());
+            console.log(`💾 Saved ${this.shoppingItems.length} shopping items to localStorage`);
+        } catch (e) {
+            console.error('Could not save shopping items to localStorage:', e);
+            this.showPersistenceError('shopping items');
+        }
+    }
+
+    saveStandardItems() {
+        try {
+            const data = JSON.stringify(this.standardItems);
+            localStorage.setItem('standardItems', data);
+            localStorage.setItem('standardItems_backup', data);
+            localStorage.setItem('standardItems_timestamp', new Date().toISOString());
+            console.log(`💾 Saved ${this.standardItems.length} pantry items to localStorage`);
+        } catch (e) {
+            console.error('Could not save standard items to localStorage:', e);
+            this.showPersistenceError('pantry items');
+        }
+    }
+
+    saveCategories() {
+        try {
+            const data = JSON.stringify(this.categories);
+            localStorage.setItem('categories', data);
+            localStorage.setItem('categories_backup', data);
+            localStorage.setItem('categories_timestamp', new Date().toISOString());
+            console.log(`💾 Saved ${this.categories.length} categories to localStorage`);
+        } catch (e) {
+            console.error('Could not save categories to localStorage:', e);
+            this.showPersistenceError('categories');
+        }
+    }
+
+    getSampleShoppingItems() {
+        return [
             {
                 id: Date.now(),
                 name: "Bananas",
@@ -787,11 +858,20 @@ class GroceryApp {
                 completed: false,
                 dateAdded: new Date().toISOString(),
                 fromStandard: true
+            },
+            {
+                id: Date.now() + 2,
+                name: "Bread",
+                category: "bakery",
+                completed: true,
+                dateAdded: new Date().toISOString(),
+                fromStandard: false
             }
         ];
+    }
 
-        // Sample pantry items
-        this.standardItems = [
+    getSamplePantryItems() {
+        return [
             {
                 id: Date.now() + 100,
                 name: "Rice",
@@ -812,160 +892,15 @@ class GroceryApp {
                 category: "produce",
                 inStock: true,
                 dateAdded: new Date().toISOString()
+            },
+            {
+                id: Date.now() + 103,
+                name: "Chicken Breast",
+                category: "meat",
+                inStock: false,
+                dateAdded: new Date().toISOString()
             }
         ];
-
-        console.log('📱 Sample data loaded for mobile use');
-    }
-
-    // Enhanced save methods - save to localStorage and optionally generate JSON
-    saveShoppingItems() {
-        if (!this.dataLoaded) return; // Don't save during initial load
-        
-        try {
-            const data = JSON.stringify(this.shoppingItems);
-            localStorage.setItem('shoppingItems', data);
-            localStorage.setItem('shoppingItems_backup', data);
-            localStorage.setItem('shoppingItems_timestamp', new Date().toISOString());
-            console.log(`💾 Saved ${this.shoppingItems.length} shopping items to localStorage`);
-            
-            // Optionally log JSON for manual file update
-            if (this.shoppingItems.length > 0) {
-                console.log('📄 Updated shopping items JSON:', JSON.stringify(this.shoppingItems, null, 2));
-            }
-        } catch (e) {
-            console.error('Could not save shopping items to localStorage:', e);
-            this.showPersistenceError('shopping items');
-        }
-    }
-
-    saveStandardItems() {
-        if (!this.dataLoaded) return; // Don't save during initial load
-        
-        try {
-            const data = JSON.stringify(this.standardItems);
-            localStorage.setItem('standardItems', data);
-            localStorage.setItem('standardItems_backup', data);
-            localStorage.setItem('standardItems_timestamp', new Date().toISOString());
-            console.log(`💾 Saved ${this.standardItems.length} pantry items to localStorage`);
-            
-            // Optionally log JSON for manual file update
-            if (this.standardItems.length > 0) {
-                console.log('📄 Updated pantry items JSON:', JSON.stringify(this.standardItems, null, 2));
-            }
-        } catch (e) {
-            console.error('Could not save standard items to localStorage:', e);
-            this.showPersistenceError('pantry items');
-        }
-    }
-
-    saveCategories() {
-        if (!this.dataLoaded) return; // Don't save during initial load
-        
-        try {
-            const data = JSON.stringify(this.categories);
-            localStorage.setItem('categories', data);
-            localStorage.setItem('categories_backup', data);
-            localStorage.setItem('categories_timestamp', new Date().toISOString());
-            console.log(`💾 Saved ${this.categories.length} categories to localStorage`);
-            
-            // Optionally log JSON for manual file update
-            if (this.categories.length > 0) {
-                console.log('📄 Updated categories JSON:', JSON.stringify(this.categories, null, 2));
-            }
-        } catch (e) {
-            console.error('Could not save categories to localStorage:', e);
-            this.showPersistenceError('categories');
-        }
-    }
-
-
-    // localStorage Fallback Methods  
-    loadShoppingItemsFromStorage() {
-        try {
-            let saved = localStorage.getItem('shoppingItems');
-            
-            // Try backup if main data is corrupted
-            if (!saved || saved === 'null') {
-                saved = localStorage.getItem('shoppingItems_backup');
-                console.log('Loaded shopping items from localStorage backup');
-            }
-            
-            const items = saved ? JSON.parse(saved) : [];
-            console.log(`📦 Loaded ${items.length} shopping items from localStorage`);
-            return items;
-        } catch (e) {
-            console.error('Could not load shopping items from localStorage:', e);
-            try {
-                // Try backup
-                const backup = localStorage.getItem('shoppingItems_backup');
-                if (backup) {
-                    console.log('Recovering shopping items from localStorage backup');
-                    return JSON.parse(backup);
-                }
-            } catch (backupError) {
-                console.error('localStorage backup also corrupted:', backupError);
-            }
-            return [];
-        }
-    }
-
-    loadStandardItemsFromStorage() {
-        try {
-            let saved = localStorage.getItem('standardItems');
-            
-            // Try backup if main data is corrupted
-            if (!saved || saved === 'null') {
-                saved = localStorage.getItem('standardItems_backup');
-                console.log('Loaded pantry items from localStorage backup');
-            }
-            
-            const items = saved ? JSON.parse(saved) : [];
-            console.log(`📦 Loaded ${items.length} pantry items from localStorage`);
-            return items;
-        } catch (e) {
-            console.error('Could not load standard items from localStorage:', e);
-            try {
-                // Try backup
-                const backup = localStorage.getItem('standardItems_backup');
-                if (backup) {
-                    console.log('Recovering pantry items from localStorage backup');
-                    return JSON.parse(backup);
-                }
-            } catch (backupError) {
-                console.error('localStorage backup also corrupted:', backupError);
-            }
-            return [];
-        }
-    }
-
-    loadCategoriesFromStorage() {
-        try {
-            let saved = localStorage.getItem('categories');
-            
-            // Try backup if main data is corrupted
-            if (!saved || saved === 'null') {
-                saved = localStorage.getItem('categories_backup');
-                console.log('Loaded categories from localStorage backup');
-            }
-            
-            const categories = saved ? JSON.parse(saved) : [];
-            console.log(`📦 Loaded ${categories.length} categories from localStorage`);
-            return categories;
-        } catch (e) {
-            console.error('Could not load categories from localStorage:', e);
-            try {
-                // Try backup
-                const backup = localStorage.getItem('categories_backup');
-                if (backup) {
-                    console.log('Recovering categories from localStorage backup');
-                    return JSON.parse(backup);
-                }
-            } catch (backupError) {
-                console.error('localStorage backup also corrupted:', backupError);
-            }
-            return [];
-        }
     }
 
     showPersistenceError(dataType) {
@@ -973,45 +908,124 @@ class GroceryApp {
         // Could add user notification here if needed
     }
 
-    // Data Export/Import Methods
+    // Device Sync Methods
     exportData() {
-        const exportData = {
-            shoppingItems: this.shoppingItems,
-            standardItems: this.standardItems,
-            categories: this.categories,
-            exportDate: new Date().toISOString(),
-            version: '1.0'
+        try {
+            this.exportDataBtn.disabled = true;
+            this.exportDataBtn.textContent = '📤 Exporting...';
+            
+            const exportData = {
+                shoppingItems: this.shoppingItems,
+                standardItems: this.standardItems,
+                categories: this.categories,
+                exportDate: new Date().toISOString(),
+                exportTime: new Date().toLocaleString(),
+                version: '1.0',
+                deviceInfo: navigator.userAgent.includes('Mobile') ? 'Mobile' : 'Desktop'
+            };
+            
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            // Standard filename for easy sync
+            const filename = 'grocery-data.json';
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', filename);
+            linkElement.click();
+            
+            console.log('📤 Data exported successfully');
+            
+            // Reset button after short delay
+            setTimeout(() => {
+                this.exportDataBtn.disabled = false;
+                this.exportDataBtn.textContent = '📤 Export to "grocery-data.json"';
+            }, 1000);
+            
+        } catch (error) {
+            console.error('Export failed:', error);
+            alert('Export failed. Please try again.');
+            this.exportDataBtn.disabled = false;
+            this.exportDataBtn.textContent = '📤 Export to "grocery-data.json"';
+        }
+    }
+
+    handleFileImport(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        // Check filename
+        if (file.name !== 'grocery-data.json') {
+            alert('Please select the "grocery-data.json" file exported from another device.');
+            return;
+        }
+        
+        this.importDataBtn.disabled = true;
+        this.importDataBtn.textContent = '📥 Importing...';
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                this.importData(e.target.result);
+            } catch (error) {
+                console.error('Import failed:', error);
+                alert('Import failed. Please check the file format.');
+            } finally {
+                // Reset button and file input
+                this.importDataBtn.disabled = false;
+                this.importDataBtn.textContent = '📥 Import from "grocery-data.json"';
+                this.importFileInput.value = '';
+            }
         };
         
-        const dataStr = JSON.stringify(exportData, null, 2);
-        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-        
-        const exportFileDefaultName = `grocery-data-${new Date().toISOString().split('T')[0]}.json`;
-        
-        const linkElement = document.createElement('a');
-        linkElement.setAttribute('href', dataUri);
-        linkElement.setAttribute('download', exportFileDefaultName);
-        linkElement.click();
+        reader.readAsText(file);
     }
 
     importData(jsonData) {
         try {
             const data = JSON.parse(jsonData);
             
+            // Validate data structure
+            if (!data.version || !data.exportDate) {
+                throw new Error('Invalid grocery data file');
+            }
+            
+            // Backup current data
+            const backup = {
+                shoppingItems: [...this.shoppingItems],
+                standardItems: [...this.standardItems], 
+                categories: [...this.categories]
+            };
+            
+            // Import data
             if (data.shoppingItems) this.shoppingItems = data.shoppingItems;
             if (data.standardItems) this.standardItems = data.standardItems;
             if (data.categories) this.categories = data.categories;
             
+            // Save to localStorage
             this.saveShoppingItems();
             this.saveStandardItems();
             this.saveCategories();
+            
+            // Update UI
             this.updateCategorySelects();
             this.render();
             
-            alert('Data imported successfully!');
+            // Success message with details
+            const importInfo = data.exportTime ? `from ${data.exportTime}` : 'successfully';
+            const deviceInfo = data.deviceInfo ? ` (${data.deviceInfo})` : '';
+            alert(`Data imported ${importInfo}${deviceInfo}!\n\n` +
+                  `📦 Shopping items: ${data.shoppingItems?.length || 0}\n` +
+                  `🏠 Pantry items: ${data.standardItems?.length || 0}\n` +
+                  `📂 Categories: ${data.categories?.length || 0}`);
+            
+            console.log('📥 Data imported successfully:', data);
+            
         } catch (e) {
-            alert('Invalid data format. Please check your file.');
             console.error('Import error:', e);
+            alert('Invalid data format. Please make sure you selected the correct "grocery-data.json" file.');
+            throw e;
         }
     }
 
