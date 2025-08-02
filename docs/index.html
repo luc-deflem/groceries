@@ -24,6 +24,8 @@
             <button class="tab-button active" data-tab="shopping" title="Shopping">🛒</button>
             <button class="tab-button" data-tab="pantry" title="Pantry">🏠</button>
             <button class="tab-button" data-tab="products" title="Products">📋</button>
+            <button class="tab-button" data-tab="recipes" title="Recipes">🍳</button>
+            <button class="tab-button" data-tab="meals" title="Meal Planning">📅</button>
             <button class="tab-button" data-tab="categories" title="Categories">⚙️</button>
             <button class="tab-button" data-tab="sync" title="Sync">📱</button>
         </nav>
@@ -100,8 +102,56 @@
                     <span id="filteredCount" style="display: none;">0 shown</span>
                 </div>
                 
+                <!-- Orphaned Products Recovery Section -->
+                <div class="orphaned-products-section" id="orphanedProductsSection" style="display: none;">
+                    <div class="orphaned-header">
+                        <h3>🚨 Orphaned Products - Need Category Assignment</h3>
+                        <p>These products have invalid categories and need to be fixed:</p>
+                    </div>
+                    <div class="orphaned-products-list" id="orphanedProductsList">
+                        <!-- Orphaned products will be listed here -->
+                    </div>
+                </div>
+                
                 <div class="products-list" id="productsList">
                     <!-- Products will be dynamically added here -->
+                </div>
+            </div>
+
+            <!-- Recipes Tab -->
+            <div class="tab-content" id="recipes-tab">
+                <div class="add-recipe-section">
+                    <input type="text" id="recipeNameInput" placeholder="Recipe name..." maxlength="100">
+                    <button id="addRecipeBtn">Add Recipe</button>
+                </div>
+                
+                <div class="recipes-stats">
+                    <span id="recipeCount">0 recipes</span>
+                </div>
+                
+                <div class="recipes-list" id="recipesList">
+                    <!-- Recipes will be dynamically added here -->
+                </div>
+            </div>
+
+            <!-- Meals/Calendar Tab -->
+            <div class="tab-content" id="meals-tab">
+                <div class="meals-header">
+                    <div class="meals-controls">
+                        <button id="prevWeekBtn" class="week-nav-btn">← Previous</button>
+                        <h2 id="currentWeekRange">Week of ...</h2>
+                        <button id="nextWeekBtn" class="week-nav-btn">Next →</button>
+                    </div>
+                    <div class="meals-actions">
+                        <button id="generateShoppingListBtn" class="generate-btn">📝 Generate Shopping List</button>
+                        <button id="clearWeekBtn" class="clear-week-btn">🗑️ Clear Week</button>
+                    </div>
+                </div>
+                
+                <div class="calendar-container">
+                    <div id="mealCalendar" class="meal-calendar">
+                        <!-- Calendar will be dynamically generated here -->
+                    </div>
                 </div>
             </div>
 
@@ -213,6 +263,114 @@
             <div class="modal-actions">
                 <button class="modal-btn secondary" id="cancelProductEdit">Cancel</button>
                 <button class="modal-btn primary" id="confirmProductEdit">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recipe Edit Modal -->
+    <div id="recipeEditModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title">Edit Recipe</span>
+                <div class="modal-header-actions">
+                    <button class="maximize-modal" id="maximizeRecipeModal" title="Maximize">⛶</button>
+                    <button class="close-modal" id="closeRecipeModal">&times;</button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="recipe-details">
+                    <div class="modal-field">
+                        <label for="editRecipeName">Recipe Name:</label>
+                        <input type="text" id="editRecipeName" maxlength="100">
+                    </div>
+                    
+                    <div class="modal-field">
+                        <label for="editRecipeDescription">Description:</label>
+                        <textarea id="editRecipeDescription" placeholder="Short description for the recipe list..." rows="2"></textarea>
+                    </div>
+
+                    <div class="modal-field">
+                        <label for="editRecipePreparation">Preparation Instructions:</label>
+                        <textarea id="editRecipePreparation" placeholder="Detailed preparation steps and instructions..." rows="4"></textarea>
+                    </div>
+                </div>
+
+                <div class="modal-field">
+                    <label>Ingredients:</label>
+                    <div class="ingredients-section">
+                        <div class="add-ingredient">
+                            <div class="product-search-container">
+                                <input type="text" id="ingredientProductSearch" placeholder="Search for product..." autocomplete="off">
+                                <div id="ingredientProductResults" class="search-results"></div>
+                                <input type="hidden" id="selectedProductId">
+                            </div>
+                            <input type="number" id="ingredientQuantity" placeholder="Amount" step="0.1" min="0">
+                            <select id="ingredientUnit">
+                                <option value="g">grams (g)</option>
+                                <option value="kg">kilograms (kg)</option>
+                                <option value="ml">milliliters (ml)</option>
+                                <option value="cl">centiliters (cl)</option>
+                                <option value="l">liters (l)</option>
+                                <option value="pcs">pieces (pcs)</option>
+                                <option value="pinch">pinch</option>
+                                <option value="tsp">teaspoon (tsp)</option>
+                                <option value="tbsp">tablespoon (tbsp)</option>
+                                <option value="cup">cup</option>
+                            </select>
+                            <button type="button" id="addIngredientBtn">Add</button>
+                        </div>
+                        <div class="ingredients-list" id="ingredientsList">
+                            <!-- Ingredients will be listed here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn secondary" id="cancelRecipeEdit">Cancel</button>
+                <button class="modal-btn primary" id="confirmRecipeEdit">Save Recipe</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Simple Meal Builder Modal -->
+    <div id="simpleMealModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title">Build Simple Meal</span>
+                <button class="close-modal" id="closeSimpleMealModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="simple-meal-info">
+                    <p>Create a meal by selecting individual products (meat, vegetables, carbs, etc.)</p>
+                </div>
+                
+                <div class="modal-field">
+                    <label for="simpleMealName">Meal Name (optional):</label>
+                    <input type="text" id="simpleMealName" placeholder="e.g., Chicken & Rice" maxlength="50">
+                </div>
+
+                <div class="modal-field">
+                    <label>Add Products to Meal:</label>
+                    <div class="simple-meal-search">
+                        <input type="text" id="simpleMealSearch" placeholder="Search products..." autocomplete="off">
+                        <button type="button" id="clearSimpleMealSearch">Clear</button>
+                    </div>
+                    <div class="product-categories">
+                        <!-- Categories will be populated dynamically -->
+                        <div id="simpleMealCategories"></div>
+                    </div>
+                </div>
+
+                <div class="modal-field">
+                    <label>Selected Products:</label>
+                    <div id="selectedProducts" class="selected-products">
+                        <!-- Selected products will appear here -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn secondary" id="cancelSimpleMeal">Cancel</button>
+                <button class="modal-btn primary" id="saveSimpleMeal">Save Meal</button>
             </div>
         </div>
     </div>
