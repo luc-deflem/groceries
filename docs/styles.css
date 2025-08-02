@@ -1115,42 +1115,114 @@ main {
 /* Maximized modal styles */
 .modal.maximized {
     z-index: 1050;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 .modal.maximized .modal-content {
-    width: 95vw;
-    max-width: none;
-    height: 95vh;
-    max-height: none;
-    margin: 2.5vh auto;
+    width: 100% !important;
+    max-width: none !important;
+    height: 100% !important;
+    max-height: none !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
     display: flex;
     flex-direction: column;
+    box-shadow: none;
 }
 
 .modal.maximized .modal-body {
     flex: 1;
     overflow-y: auto;
     margin-bottom: 0;
-    padding-right: 10px; /* Space for scrollbar */
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    height: 0; /* Force flex child to respect parent height */
+}
+
+.modal.maximized .modal-header {
+    padding: 10px 20px 8px;
+    border-bottom: 1px solid #e2e8f0;
+    flex-shrink: 0;
+    height: auto;
+    min-height: 0;
+}
+
+.modal.maximized .modal-header .modal-title {
+    font-size: 16px;
+    line-height: 1.2;
 }
 
 .modal.maximized .modal-actions {
-    margin-top: 20px;
+    margin-top: 0;
+    padding: 10px 20px 15px;
     flex-shrink: 0;
+    border-top: 1px solid #e2e8f0;
 }
 
-/* Better layout for maximized recipe modal */
-.modal.maximized .modal-field textarea {
-    min-height: 120px;
+/* Proportional layout for maximized recipe modal */
+.modal.maximized .recipe-details {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* Recipe Name - compact */
+.modal.maximized .recipe-details .modal-field:nth-child(1) {
+    flex: 0 0 auto;
+    margin-bottom: 15px;
+}
+
+.modal.maximized #editRecipeName {
+    height: 32px;
+}
+
+/* Description - 1/4 of available space (12%) */
+.modal.maximized .recipe-details .modal-field:nth-child(2) {
+    flex: 0 0 12%;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 15px;
+}
+
+.modal.maximized #editRecipeDescription {
+    flex: 1;
+    min-height: 60px;
     resize: vertical;
 }
 
+/* Preparation Instructions - Maximum space (remaining ~60%) */
+.modal.maximized .recipe-details .modal-field:nth-child(3) {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 15px;
+}
+
+.modal.maximized #editRecipePreparation {
+    flex: 1;
+    min-height: 200px;
+    resize: vertical;
+}
+
+/* Ingredients - 1/3 of available space */
 .modal.maximized .ingredients-section {
-    min-height: 300px;
+    flex: 0 0 25%;
+    display: flex;
+    flex-direction: column;
+    margin-top: 0;
 }
 
 .modal.maximized .ingredients-list {
-    max-height: 400px;
+    flex: 1;
+    overflow-y: auto;
+    max-height: none;
 }
 
 /* Two-column layout for maximized modals on large screens */
