@@ -23,12 +23,12 @@ body {
 header {
     background: #2c3e50;
     color: white;
-    padding: 30px 20px;
+    padding: 15px 20px;
     text-align: center;
 }
 
 header h1 {
-    font-size: 2em;
+    font-size: 1.5em;
     font-weight: 300;
 }
 
@@ -41,11 +41,11 @@ header h1 {
 
 .tab-button {
     flex: 1;
-    padding: 15px 20px;
+    padding: 12px 16px;
     background: transparent;
     color: #bdc3c7;
     border: none;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.3s;
@@ -76,62 +76,84 @@ main {
     padding: 30px 20px;
 }
 
-.add-item-section, .add-standard-item-section, .add-category-section {
+.add-item-section, .add-standard-item-section, .add-category-section, .add-product-section {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     margin-bottom: 20px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    align-items: center;
 }
 
-#itemInput, #standardItemInput, #categoryInput {
+#itemInput, #standardItemInput, #categoryInput, #productInput, #productSearchInput {
     flex: 1;
-    min-width: 200px;
-    padding: 15px;
+    min-width: 120px;
+    padding: 10px 12px;
     border: 2px solid #ecf0f1;
-    border-radius: 10px;
-    font-size: 16px;
+    border-radius: 8px;
+    font-size: 14px;
     outline: none;
     transition: border-color 0.3s;
 }
 
 #categoryEmojiInput {
-    width: 60px;
-    padding: 15px;
+    width: 50px;
+    padding: 10px 8px;
     border: 2px solid #ecf0f1;
-    border-radius: 10px;
-    font-size: 16px;
+    border-radius: 8px;
+    font-size: 14px;
     outline: none;
     transition: border-color 0.3s;
     text-align: center;
 }
 
-#itemInput:focus, #standardItemInput:focus, #categoryInput:focus, #categoryEmojiInput:focus {
+#itemInput:focus, #standardItemInput:focus, #categoryInput:focus, #categoryEmojiInput:focus, #productInput:focus, #productSearchInput:focus {
     border-color: #3498db;
 }
 
-#categorySelect, #standardCategorySelect {
-    padding: 15px;
+#categorySelect, #standardCategorySelect, #productCategorySelect {
+    padding: 10px 12px;
     border: 2px solid #ecf0f1;
-    border-radius: 10px;
-    font-size: 16px;
+    border-radius: 8px;
+    font-size: 14px;
     background: white;
     outline: none;
-    min-width: 120px;
+    min-width: 100px;
+    flex-shrink: 0;
 }
 
-#addBtn, #addStandardBtn, #addCategoryBtn {
-    padding: 15px 25px;
+#addBtn, #addStandardBtn, #addCategoryBtn, #addProductBtn {
+    padding: 10px 16px;
     background: #27ae60;
     color: white;
     border: none;
-    border-radius: 10px;
-    font-size: 16px;
+    border-radius: 8px;
+    font-size: 14px;
     font-weight: 600;
     cursor: pointer;
     transition: background 0.3s;
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 
-#addBtn:hover, #addStandardBtn:hover, #addCategoryBtn:hover {
+#clearSearchBtn {
+    padding: 10px 16px;
+    background: #95a5a6;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+#clearSearchBtn:hover {
+    background: #7f8c8d;
+}
+
+#addBtn:hover, #addStandardBtn:hover, #addCategoryBtn:hover, #addProductBtn:hover {
     background: #2ecc71;
 }
 
@@ -325,14 +347,6 @@ main {
     background: #2980b9;
 }
 
-.category-item.default {
-    opacity: 0.7;
-}
-
-.category-item.default .delete-btn {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
 
 /* Edit item category modal */
 .modal {
@@ -348,12 +362,15 @@ main {
 
 .modal-content {
     background-color: white;
-    margin: 15% auto;
-    padding: 30px;
+    margin: 5% auto;
+    padding: 20px;
     border-radius: 15px;
     width: 90%;
     max-width: 400px;
+    max-height: 80vh;
+    overflow-y: auto;
     box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    position: relative;
 }
 
 .modal-header {
@@ -435,22 +452,93 @@ main {
     background: #7f8c8d;
 }
 
+/* Product Edit Modal */
+.modal-field {
+    margin-bottom: 15px;
+}
+
+.modal-field label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 14px;
+}
+
+.modal-field input[type="text"],
+.modal-field select {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #ecf0f1;
+    border-radius: 8px;
+    font-size: 16px;
+    background: white;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+.modal-field input[type="text"]:focus,
+.modal-field select:focus {
+    border-color: #3498db;
+}
+
+.status-checkboxes {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #ecf0f1;
+}
+
+.status-checkbox-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    gap: 10px;
+    padding: 6px;
+    border-radius: 6px;
+    transition: background-color 0.2s;
+}
+
+.status-checkbox-label:hover {
+    background-color: rgba(52, 152, 219, 0.1);
+}
+
+.status-checkbox-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    margin: 0;
+}
+
+.status-checkbox-label span {
+    flex: 1;
+    color: #2c3e50;
+}
+
 /* Pantry Actions */
 .pantry-actions {
     margin-bottom: 20px;
-    text-align: center;
+    display: flex;
+    gap: 10px;
+    align-items: center;
 }
 
 #addAllUnstocked {
-    padding: 12px 20px;
+    padding: 10px 16px;
     background: #3498db;
     color: white;
     border: none;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
     cursor: pointer;
     transition: background 0.3s;
+    flex: 1;
 }
 
 #addAllUnstocked:hover {
@@ -461,12 +549,13 @@ main {
 .stock-item {
     display: flex;
     align-items: center;
-    padding: 15px;
-    margin-bottom: 10px;
+    padding: 8px 12px;
+    margin-bottom: 4px;
     background: #f8f9fa;
-    border-radius: 10px;
-    transition: all 0.3s;
-    border-left: 4px solid #3498db;
+    border-radius: 6px;
+    transition: all 0.2s;
+    border-left: 3px solid #3498db;
+    min-height: 36px;
 }
 
 .stock-item.out-of-stock {
@@ -474,35 +563,58 @@ main {
     background: #fdf2f2;
 }
 
+.stock-item.out-of-season {
+    border-left-color: #95a5a6;
+    background: #f8f9fa;
+    opacity: 0.7;
+}
+
 .stock-item:hover {
-    transform: translateX(5px);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    transform: translateX(3px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 .stock-checkbox {
-    margin-right: 15px;
-    width: 20px;
-    height: 20px;
+    margin-right: 10px;
+    width: 16px;
+    height: 16px;
     cursor: pointer;
+    flex-shrink: 0;
+}
+
+.season-checkbox {
+    margin-right: 8px;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    flex-shrink: 0;
 }
 
 .stock-content {
     flex: 1;
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    min-width: 0;
 }
 
 .stock-name {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 500;
-    margin-bottom: 2px;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-right: 8px;
 }
 
 .stock-status {
-    font-size: 12px;
+    font-size: 10px;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
+    margin-right: 8px;
+    flex-shrink: 0;
 }
 
 .stock-status.in-stock {
@@ -515,22 +627,23 @@ main {
 
 .stock-actions {
     display: flex;
-    gap: 5px;
+    gap: 4px;
+    flex-shrink: 0;
 }
 
 .add-to-list-btn {
     background: #f39c12;
     color: white;
     border: none;
-    width: 30px;
-    height: 30px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.3s;
+    transition: background 0.2s;
 }
 
 .add-to-list-btn:hover {
@@ -545,12 +658,13 @@ main {
 .grocery-item {
     display: flex;
     align-items: center;
-    padding: 15px;
-    margin-bottom: 10px;
+    padding: 8px 12px;
+    margin-bottom: 4px;
     background: #f8f9fa;
-    border-radius: 10px;
-    transition: all 0.3s;
-    border-left: 4px solid #3498db;
+    border-radius: 6px;
+    transition: all 0.2s;
+    border-left: 3px solid #3498db;
+    min-height: 36px;
 }
 
 .grocery-item.completed {
@@ -560,27 +674,34 @@ main {
 }
 
 .grocery-item:hover {
-    transform: translateX(5px);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    transform: translateX(3px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 .item-checkbox {
-    margin-right: 15px;
-    width: 20px;
-    height: 20px;
+    margin-right: 10px;
+    width: 16px;
+    height: 16px;
     cursor: pointer;
+    flex-shrink: 0;
 }
 
 .item-content {
     flex: 1;
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    min-width: 0;
 }
 
 .item-name {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 500;
-    margin-bottom: 2px;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-right: 8px;
 }
 
 .item-category {
@@ -591,34 +712,37 @@ main {
 }
 
 .item-category-small {
-    font-size: 11px;
+    font-size: 10px;
     color: #95a5a6;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
+    margin-right: 8px;
+    flex-shrink: 0;
 }
 
 .item-actions {
     display: flex;
-    gap: 5px;
+    gap: 4px;
+    flex-shrink: 0;
 }
 
 .delete-btn, .stock-btn {
     color: white;
     border: none;
-    width: 30px;
-    height: 30px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.3s;
+    transition: background 0.2s;
 }
 
 .delete-btn {
     background: #e74c3c;
-    font-size: 16px;
+    font-size: 14px;
 }
 
 .delete-btn:hover {
@@ -655,19 +779,19 @@ main {
 
 /* Category Sections */
 .category-section {
-    margin-bottom: 25px;
+    margin-bottom: 15px;
 }
 
 .category-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 15px;
+    padding: 8px 12px;
     background: #34495e;
     color: white;
-    border-radius: 8px 8px 0 0;
+    border-radius: 6px 6px 0 0;
     font-weight: 600;
-    margin-bottom: 5px;
+    margin-bottom: 3px;
 }
 
 .category-title {
@@ -744,6 +868,194 @@ main {
 
 .bought-items .grocery-item:last-child {
     margin-bottom: 0;
+}
+
+/* Out of Season Section */
+.out-of-season-section {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 2px dashed #bdc3c7;
+}
+
+.out-of-season-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    background: #95a5a6;
+    color: white;
+    border-radius: 8px 8px 0 0;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.out-of-season-title {
+    font-size: 16px;
+}
+
+.out-of-season-count {
+    background: rgba(255,255,255,0.2);
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.out-of-season-items {
+    background: #f5f5f5;
+    border-radius: 0 0 8px 8px;
+    padding: 5px;
+}
+
+.out-of-season-items .stock-item {
+    margin-bottom: 5px;
+    border-left: none;
+    border-radius: 6px;
+    background: #eeeeee;
+}
+
+.out-of-season-items .stock-item:last-child {
+    margin-bottom: 0;
+}
+
+/* Products Section */
+.products-search-section {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 15px;
+    align-items: center;
+}
+
+.products-stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 0 5px;
+    font-size: 14px;
+    color: #7f8c8d;
+}
+
+.products-list {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.product-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    margin-bottom: 4px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    transition: all 0.2s;
+    border-left: 3px solid #3498db;
+    min-height: 36px;
+}
+
+.product-item.in-shopping {
+    border-left-color: #e67e22;
+    background: #fef9e7;
+}
+
+.product-item.in-pantry {
+    border-left-color: #27ae60;
+    background: #eafaf1;
+}
+
+.product-item:hover {
+    transform: translateX(3px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.product-checkboxes {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+
+.product-checkbox-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 10px;
+    gap: 2px;
+}
+
+.product-checkbox {
+    width: 12px;
+    height: 12px;
+    cursor: pointer;
+}
+
+.checkbox-text {
+    font-size: 12px;
+    line-height: 1;
+}
+
+.product-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.product-name {
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.product-status {
+    font-size: 10px;
+    color: #7f8c8d;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.product-status .status-nostock {
+    color: #e74c3c;
+    font-weight: 600;
+}
+
+.product-status .status-notseason {
+    color: #95a5a6;
+    font-weight: 600;
+}
+
+.product-actions {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.add-to-shopping-btn {
+    background: #e67e22;
+    color: white;
+    border: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.add-to-shopping-btn:hover {
+    background: #d35400;
+}
+
+.add-to-shopping-btn:disabled {
+    background: #bdc3c7;
+    cursor: not-allowed;
 }
 
 /* Mobile responsive */

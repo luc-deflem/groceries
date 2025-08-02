@@ -8,26 +8,28 @@
     <meta name="apple-mobile-web-app-title" content="Grocery List">
     <link rel="apple-touch-icon" href="icon-192.png">
     <link rel="manifest" href="manifest.json">
-    <title>Grocery List MVP 0.3</title>
+    <title>Grocery List MVP</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🛒 Grocery Manager V0.3</h1>
+            <h1>🛒 Grocery Manager</h1>
         </header>
         
         <nav class="tab-navigation">
-            <button class="tab-button active" data-tab="shopping">🛒 Shopping List</button>
-            <button class="tab-button" data-tab="pantry">🏠 Pantry Stock</button>
-            <button class="tab-button" data-tab="categories">⚙️ Categories</button>
+            <button class="tab-button active" data-tab="shopping" title="Shopping">🛒</button>
+            <button class="tab-button" data-tab="pantry" title="Pantry">🏠</button>
+            <button class="tab-button" data-tab="products" title="Products">📋</button>
+            <button class="tab-button" data-tab="categories" title="Categories">⚙️</button>
+            <button class="tab-button" data-tab="sync" title="Sync">📱</button>
         </nav>
         
         <main>
             <!-- Shopping List Tab -->
             <div class="tab-content active" id="shopping-tab">
                 <div class="add-item-section">
-                    <input type="text" id="itemInput" placeholder="Add grocery item..." maxlength="100">
+                    <input type="text" id="itemInput" placeholder="Add item..." maxlength="100">
                     <select id="categorySelect">
                         <option value="produce">🥬 Produce</option>
                         <option value="dairy">🥛 Dairy</option>
@@ -53,7 +55,7 @@
             <!-- Pantry Stock Tab -->
             <div class="tab-content" id="pantry-tab">
                 <div class="add-standard-item-section">
-                    <input type="text" id="standardItemInput" placeholder="Add standard grocery item..." maxlength="100">
+                    <input type="text" id="standardItemInput" placeholder="Add item..." maxlength="100">
                     <select id="standardCategorySelect">
                         <option value="produce">🥬 Produce</option>
                         <option value="dairy">🥛 Dairy</option>
@@ -63,15 +65,40 @@
                         <option value="bakery">🍞 Bakery</option>
                         <option value="other">📦 Other</option>
                     </select>
-                    <button id="addStandardBtn">Add to Pantry</button>
+                    <button id="addStandardBtn">Add</button>
                 </div>
                 
                 <div class="pantry-actions">
-                    <button id="addAllUnstocked">Add All Out-of-Stock to Shopping List</button>
+                    <button id="addAllUnstocked">Add Out-of-Stock to List</button>
                 </div>
                 
                 <div class="standard-list" id="standardList">
                     <!-- Standard items will be dynamically added here -->
+                </div>
+            </div>
+
+            <!-- Products Tab -->
+            <div class="tab-content" id="products-tab">
+                <div class="products-search-section">
+                    <input type="text" id="productSearchInput" placeholder="Search products..." maxlength="100">
+                    <button id="clearSearchBtn">Clear</button>
+                </div>
+                
+                <div class="add-product-section">
+                    <input type="text" id="productInput" placeholder="Add new product..." maxlength="100">
+                    <select id="productCategorySelect">
+                        <!-- Options populated dynamically -->
+                    </select>
+                    <button id="addProductBtn">Add</button>
+                </div>
+                
+                <div class="products-stats">
+                    <span id="productCount">0 products</span>
+                    <span id="filteredCount" style="display: none;">0 shown</span>
+                </div>
+                
+                <div class="products-list" id="productsList">
+                    <!-- Products will be dynamically added here -->
                 </div>
             </div>
 
@@ -86,7 +113,14 @@
                 <div class="category-help">
                     <p><strong>Shop Order:</strong> Drag categories to match your store's layout for optimal shopping flow.</p>
                 </div>
+                
+                <div class="categories-list" id="categoriesList">
+                    <!-- Categories will be dynamically added here -->
+                </div>
+            </div>
 
+            <!-- Sync Tab -->
+            <div class="tab-content" id="sync-tab">
                 <div class="sync-section">
                     <h3>📱 Device Sync</h3>
                     <div class="sync-actions">
@@ -97,11 +131,6 @@
                     <div class="sync-info">
                         <p><small>Export on one device, then import on another to sync your grocery lists and pantry.</small></p>
                     </div>
-                </div>
-
-                
-                <div class="categories-list" id="categoriesList">
-                    <!-- Categories will be dynamically added here -->
                 </div>
             </div>
         </main>
@@ -123,6 +152,55 @@
             <div class="modal-actions">
                 <button class="modal-btn secondary" id="cancelChangeCategory">Cancel</button>
                 <button class="modal-btn primary" id="confirmChangeCategory">Change Category</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Edit Modal -->
+    <div id="productEditModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title">Edit Product</span>
+                <button class="close-modal" id="closeProductModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-field">
+                    <label for="editProductName">Product Name:</label>
+                    <input type="text" id="editProductName" maxlength="100">
+                </div>
+                
+                <div class="modal-field">
+                    <label for="editProductCategory">Category:</label>
+                    <select id="editProductCategory">
+                        <!-- Options populated dynamically -->
+                    </select>
+                </div>
+
+                <div class="modal-field">
+                    <label>Status Options:</label>
+                    <div class="status-checkboxes">
+                        <label class="status-checkbox-label">
+                            <input type="checkbox" id="editInShopping">
+                            <span>🛒 Shopping List</span>
+                        </label>
+                        <label class="status-checkbox-label">
+                            <input type="checkbox" id="editInPantry">
+                            <span>🏠 Pantry</span>
+                        </label>
+                        <label class="status-checkbox-label">
+                            <input type="checkbox" id="editInStock">
+                            <span>✅ In Stock</span>
+                        </label>
+                        <label class="status-checkbox-label">
+                            <input type="checkbox" id="editInSeason">
+                            <span>🌱 In Season</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn secondary" id="cancelProductEdit">Cancel</button>
+                <button class="modal-btn primary" id="confirmProductEdit">Save Changes</button>
             </div>
         </div>
     </div>

@@ -10,14 +10,25 @@ class GroceryApp {
         this.shoppingItems = this.loadShoppingItems();
         this.standardItems = this.loadStandardItems();
         this.categories = this.loadCategories();
+        this.allProducts = this.loadAllProducts();
         
         this.initializeDefaultCategories();
         this.initializeElements();
         this.attachEventListeners();
+        
+        // Update category selects with current categories
+        this.updateCategorySelects();
+        
+        // Sync products with shopping and pantry items
+        this.syncProductsWithExistingItems();
+        
+        // Update lists from products (makes products the master list)
+        this.syncListsFromProducts();
+        
         this.render();
         
         console.log('🛒 Grocery Manager initialized with localStorage');
-        console.log(`📊 Data loaded: ${this.shoppingItems.length} shopping items, ${this.standardItems.length} pantry items, ${this.categories.length} categories`);
+        console.log(`📊 Data loaded: ${this.shoppingItems.length} shopping items, ${this.standardItems.length} pantry items, ${this.categories.length} categories, ${this.allProducts.length} products`);
     }
 
     initializeDefaultCategories() {
@@ -61,6 +72,16 @@ class GroceryApp {
         this.addCategoryBtn = document.getElementById('addCategoryBtn');
         this.categoriesList = document.getElementById('categoriesList');
 
+        // Products elements
+        this.productSearchInput = document.getElementById('productSearchInput');
+        this.clearSearchBtn = document.getElementById('clearSearchBtn');
+        this.productInput = document.getElementById('productInput');
+        this.productCategorySelect = document.getElementById('productCategorySelect');
+        this.addProductBtn = document.getElementById('addProductBtn');
+        this.productsList = document.getElementById('productsList');
+        this.productCount = document.getElementById('productCount');
+        this.filteredCount = document.getElementById('filteredCount');
+
         // Sync elements
         this.exportDataBtn = document.getElementById('exportDataBtn');
         this.importDataBtn = document.getElementById('importDataBtn');
@@ -74,6 +95,18 @@ class GroceryApp {
         this.cancelChangeCategoryBtn = document.getElementById('cancelChangeCategory');
         this.confirmChangeCategoryBtn = document.getElementById('confirmChangeCategory');
         this.closeModalBtn = document.querySelector('.close-modal');
+        
+        // Product edit modal elements
+        this.productEditModal = document.getElementById('productEditModal');
+        this.editProductName = document.getElementById('editProductName');
+        this.editProductCategory = document.getElementById('editProductCategory');
+        this.editInShopping = document.getElementById('editInShopping');
+        this.editInPantry = document.getElementById('editInPantry');
+        this.editInStock = document.getElementById('editInStock');
+        this.editInSeason = document.getElementById('editInSeason');
+        this.closeProductModalBtn = document.getElementById('closeProductModal');
+        this.cancelProductEditBtn = document.getElementById('cancelProductEdit');
+        this.confirmProductEditBtn = document.getElementById('confirmProductEdit');
     }
 
     attachEventListeners() {
@@ -102,6 +135,14 @@ class GroceryApp {
             if (e.key === 'Enter') this.addCategory();
         });
 
+        // Products events
+        this.addProductBtn.addEventListener('click', () => this.addProduct());
+        this.productInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') this.addProduct();
+        });
+        this.productSearchInput.addEventListener('input', () => this.searchProducts());
+        this.clearSearchBtn.addEventListener('click', () => this.clearProductSearch());
+
         // Sync events
         this.exportDataBtn.addEventListener('click', () => this.exportData());
         this.importDataBtn.addEventListener('click', () => this.importFileInput.click());
@@ -113,10 +154,21 @@ class GroceryApp {
         this.cancelChangeCategoryBtn.addEventListener('click', () => this.closeModal());
         this.confirmChangeCategoryBtn.addEventListener('click', () => this.confirmCategoryChange());
         
+        // Product edit modal events
+        this.closeProductModalBtn.addEventListener('click', () => this.closeProductEditModal());
+        this.cancelProductEditBtn.addEventListener('click', () => this.closeProductEditModal());
+        this.confirmProductEditBtn.addEventListener('click', () => this.confirmProductEdit());
+        
         // Close modal when clicking outside
         this.changeCategoryModal.addEventListener('click', (e) => {
             if (e.target === this.changeCategoryModal) {
                 this.closeModal();
+            }
+        });
+        
+        this.productEditModal.addEventListener('click', (e) => {
+            if (e.target === this.productEditModal) {
+                this.closeProductEditModal();
             }
         });
     }
@@ -158,11 +210,7 @@ class GroceryApp {
 
     deleteCategory(categoryId) {
         const category = this.categories.find(cat => cat.id === categoryId);
-        if (category && category.isDefault) {
-            alert('Cannot delete default categories!');
-            return;
-        }
-
+        
         // Check if category is being used
         const usedInShopping = this.shoppingItems.some(item => item.category === categoryId);
         const usedInStandard = this.standardItems.some(item => item.category === categoryId);
@@ -172,10 +220,351 @@ class GroceryApp {
             return;
         }
 
-        this.categories = this.categories.filter(cat => cat.id !== categoryId);
-        this.saveCategories();
-        this.updateCategorySelects();
+        if (confirm(`Are you sure you want to delete the "${category.name}" category?`)) {
+            this.categories = this.categories.filter(cat => cat.id !== categoryId);
+            this.saveCategories();
+            this.updateCategorySelects();
+            this.render();
+        }
+    }
+
+    editCategory(categoryId) {
+        const category = this.categories.find(cat => cat.id === categoryId);
+        if (!category) return;
+
+        const newName = prompt('Enter new category name:', category.name);
+        if (newName && newName.trim() && newName.trim() !== category.name) {
+            const trimmedName = newName.trim().toLowerCase();
+            
+            // Check if name already exists (excluding current category)
+            if (this.categories.some(cat => cat.id !== categoryId && cat.name === trimmedName)) {
+                alert('A category with this name already exists!');
+                return;
+            }
+
+            const newEmoji = prompt('Enter new emoji:', category.emoji);
+            if (newEmoji !== null) {
+                const oldId = category.id;
+                const newId = trimmedName;
+                
+                // Update category
+                category.name = trimmedName;
+                category.id = newId;
+                category.emoji = newEmoji.trim() || category.emoji;
+                
+                // Update all items that use this category
+                this.shoppingItems.forEach(item => {
+                    if (item.category === oldId) {
+                        item.category = newId;
+                    }
+                });
+                this.standardItems.forEach(item => {
+                    if (item.category === oldId) {
+                        item.category = newId;
+                    }
+                });
+                
+                this.saveCategories();
+                this.saveShoppingItems();
+                this.saveStandardItems();
+                this.updateCategorySelects();
+                this.render();
+            }
+        }
+    }
+
+    editShoppingItem(itemId) {
+        // Find the corresponding product in the master list
+        const product = this.allProducts.find(product => product.id === itemId);
+        if (!product) return;
+        
+        // Use the comprehensive product edit modal
+        this.openProductEditModal(product);
+    }
+
+    editStandardItem(itemId) {
+        // Find the corresponding product in the master list
+        const product = this.allProducts.find(product => product.id === itemId);
+        if (!product) return;
+        
+        // Use the comprehensive product edit modal
+        this.openProductEditModal(product);
+    }
+
+    // Products Methods
+    addProduct() {
+        console.log('📝 Adding product...');
+        const productName = this.productInput.value.trim();
+        const category = this.productCategorySelect.value;
+
+        console.log('Product name:', productName, 'Category:', category);
+
+        if (!productName) {
+            this.productInput.focus();
+            return;
+        }
+
+        // Check if product already exists
+        const existingProduct = this.allProducts.find(product => 
+            product.name.toLowerCase() === productName.toLowerCase()
+        );
+
+        if (existingProduct) {
+            alert('This product already exists in your products list!');
+            this.productInput.value = '';
+            return;
+        }
+
+        const newProduct = {
+            id: Date.now(),
+            name: productName,
+            category: category,
+            inShopping: false,
+            inPantry: false,
+            inStock: false,
+            inSeason: true,
+            completed: false,
+            dateAdded: new Date().toISOString()
+        };
+
+        this.allProducts.push(newProduct);
+        this.productInput.value = '';
+        this.productInput.focus();
+        this.saveAllProducts();
         this.render();
+    }
+
+    deleteProduct(productId) {
+        if (confirm('Are you sure you want to delete this product?')) {
+            // Remove from products master list
+            this.allProducts = this.allProducts.filter(product => product.id !== productId);
+            
+            // Remove from shopping list (they use the same ID)
+            this.shoppingItems = this.shoppingItems.filter(item => item.id !== productId);
+            
+            // Remove from pantry list (they use the same ID)
+            this.standardItems = this.standardItems.filter(item => item.id !== productId);
+            
+            // Save all lists
+            this.saveAllProducts();
+            this.saveShoppingItems();
+            this.saveStandardItems();
+            
+            this.render();
+        }
+    }
+
+    editProduct(productId) {
+        const product = this.allProducts.find(product => product.id === productId);
+        if (!product) return;
+        
+        this.openProductEditModal(product);
+    }
+
+    addProductToShopping(productId) {
+        const product = this.allProducts.find(p => p.id === productId);
+        if (!product) return;
+
+        if (product.inShopping) {
+            alert('This item is already in your shopping list!');
+            return;
+        }
+
+        // Update product status
+        product.inShopping = true;
+        product.completed = false;
+        
+        this.saveAllProducts();
+        this.syncListsFromProducts();
+        this.switchTab('shopping');
+    }
+
+    toggleProductShopping(productId) {
+        const product = this.allProducts.find(p => p.id === productId);
+        if (!product) return;
+
+        product.inShopping = !product.inShopping;
+        if (!product.inShopping) {
+            product.completed = false;
+        }
+        
+        this.saveAllProducts();
+        this.syncListsFromProducts();
+        this.render();
+    }
+
+    toggleProductPantry(productId) {
+        const product = this.allProducts.find(p => p.id === productId);
+        if (!product) return;
+
+        product.inPantry = !product.inPantry;
+        if (!product.inPantry) {
+            product.inStock = false;
+            product.inSeason = true;
+        } else {
+            product.inStock = true;
+            product.inSeason = true;
+        }
+        
+        this.saveAllProducts();
+        this.syncListsFromProducts();
+        this.render();
+    }
+
+    toggleProductStock(productId) {
+        const product = this.allProducts.find(p => p.id === productId);
+        if (!product || !product.inPantry) return;
+
+        product.inStock = !product.inStock;
+        
+        this.saveAllProducts();
+        this.syncListsFromProducts();
+        this.render();
+    }
+
+    toggleProductSeason(productId) {
+        const product = this.allProducts.find(p => p.id === productId);
+        if (!product || !product.inPantry) return;
+
+        product.inSeason = !product.inSeason;
+        if (!product.inSeason) {
+            product.inStock = false;
+        }
+        
+        this.saveAllProducts();
+        this.syncListsFromProducts();
+        this.render();
+    }
+
+    toggleProductCompleted(productId) {
+        const product = this.allProducts.find(p => p.id === productId);
+        if (!product || !product.inShopping) return;
+
+        product.completed = !product.completed;
+        
+        this.saveAllProducts();
+        this.syncListsFromProducts();
+        this.render();
+    }
+
+    searchProducts() {
+        this.render();
+    }
+
+    clearProductSearch() {
+        this.productSearchInput.value = '';
+        this.render();
+    }
+
+    getProductStatus(product) {
+        return {
+            inShopping: product.inShopping || false,
+            inPantry: product.inPantry || false,
+            inStock: product.inStock || false,
+            inSeason: product.inSeason !== false,
+            completed: product.completed || false
+        };
+    }
+
+    syncProductsWithExistingItems() {
+        let hasChanges = false;
+
+        // Add shopping items to products if they don't exist
+        this.shoppingItems.forEach(shoppingItem => {
+            const existingProduct = this.allProducts.find(product => 
+                product.name.toLowerCase() === shoppingItem.name.toLowerCase() && 
+                product.category === shoppingItem.category
+            );
+
+            if (!existingProduct) {
+                const newProduct = {
+                    id: Date.now() + Math.random(),
+                    name: shoppingItem.name,
+                    category: shoppingItem.category,
+                    inShopping: true,
+                    inPantry: shoppingItem.fromStandard || false,
+                    inStock: false,
+                    inSeason: true,
+                    completed: shoppingItem.completed || false,
+                    dateAdded: shoppingItem.dateAdded || new Date().toISOString()
+                };
+                this.allProducts.push(newProduct);
+                hasChanges = true;
+            } else {
+                // Update existing product to reflect shopping status
+                existingProduct.inShopping = true;
+                existingProduct.completed = shoppingItem.completed || false;
+                if (shoppingItem.fromStandard) {
+                    existingProduct.inPantry = true;
+                }
+                hasChanges = true;
+            }
+        });
+
+        // Add pantry items to products if they don't exist
+        this.standardItems.forEach(standardItem => {
+            const existingProduct = this.allProducts.find(product => 
+                product.name.toLowerCase() === standardItem.name.toLowerCase() && 
+                product.category === standardItem.category
+            );
+
+            if (!existingProduct) {
+                const newProduct = {
+                    id: Date.now() + Math.random(),
+                    name: standardItem.name,
+                    category: standardItem.category,
+                    inShopping: false,
+                    inPantry: true,
+                    inStock: standardItem.inStock !== undefined ? standardItem.inStock : true,
+                    inSeason: standardItem.inSeason !== undefined ? standardItem.inSeason : true,
+                    completed: false,
+                    dateAdded: standardItem.dateAdded || new Date().toISOString()
+                };
+                this.allProducts.push(newProduct);
+                hasChanges = true;
+            } else {
+                // Update existing product to reflect pantry status
+                existingProduct.inPantry = true;
+                existingProduct.inStock = standardItem.inStock !== undefined ? standardItem.inStock : true;
+                existingProduct.inSeason = standardItem.inSeason !== undefined ? standardItem.inSeason : true;
+                hasChanges = true;
+            }
+        });
+
+        if (hasChanges) {
+            this.saveAllProducts();
+            console.log('🔄 Synced products with existing shopping and pantry items');
+        }
+    }
+
+    syncListsFromProducts() {
+        // Update shopping list from products
+        this.shoppingItems = this.allProducts
+            .filter(product => product.inShopping)
+            .map(product => ({
+                id: product.id,
+                name: product.name,
+                category: product.category,
+                completed: product.completed || false,
+                dateAdded: product.dateAdded,
+                fromStandard: product.inPantry || false
+            }));
+
+        // Update pantry list from products
+        this.standardItems = this.allProducts
+            .filter(product => product.inPantry)
+            .map(product => ({
+                id: product.id,
+                name: product.name,
+                category: product.category,
+                inStock: product.inStock || false,
+                inSeason: product.inSeason !== false,
+                dateAdded: product.dateAdded
+            }));
+
+        this.saveShoppingItems();
+        this.saveStandardItems();
+        console.log('🔄 Synced shopping and pantry lists from products');
     }
 
     moveCategory(fromIndex, toIndex) {
@@ -204,6 +593,14 @@ class GroceryApp {
         this.categorySelect.innerHTML = options;
         this.standardCategorySelect.innerHTML = options;
         this.newCategorySelect.innerHTML = options;
+        
+        // Update product category selects
+        if (this.productCategorySelect) {
+            this.productCategorySelect.innerHTML = options;
+        }
+        if (this.editProductCategory) {
+            this.editProductCategory.innerHTML = options;
+        }
     }
 
     // Item Category Change Methods
@@ -243,6 +640,60 @@ class GroceryApp {
         this.render();
     }
 
+    openProductEditModal(product) {
+        this.currentEditingProduct = product;
+        
+        // Populate modal fields with current product data
+        this.editProductName.value = product.name;
+        this.editProductCategory.value = product.category;
+        this.editInShopping.checked = product.inShopping || false;
+        this.editInPantry.checked = product.inPantry || false;
+        this.editInStock.checked = product.inStock || false;
+        this.editInSeason.checked = product.inSeason !== false; // Default to true if not set
+        
+        this.productEditModal.style.display = 'block';
+    }
+
+    closeProductEditModal() {
+        this.productEditModal.style.display = 'none';
+        this.currentEditingProduct = null;
+    }
+
+    confirmProductEdit() {
+        if (!this.currentEditingProduct) return;
+
+        const product = this.currentEditingProduct;
+        const newName = this.editProductName.value.trim();
+        const newCategory = this.editProductCategory.value;
+        const newInShopping = this.editInShopping.checked;
+        const newInPantry = this.editInPantry.checked;
+        const newInStock = this.editInStock.checked;
+        const newInSeason = this.editInSeason.checked;
+
+        if (!newName) {
+            alert('Product name cannot be empty');
+            return;
+        }
+
+        // Update product with new values
+        product.name = newName;
+        product.category = newCategory;
+        product.inShopping = newInShopping;
+        product.inPantry = newInPantry;
+        product.inStock = newInStock;
+        product.inSeason = newInSeason;
+
+        // Update shopping and pantry lists to sync with product changes
+        this.syncListsFromProducts();
+        
+        this.saveAllProducts();
+        this.saveShoppingItems();
+        this.saveStandardItems();
+        
+        this.closeProductEditModal();
+        this.render();
+    }
+
     switchTab(tabName) {
         this.currentTab = tabName;
         
@@ -259,6 +710,10 @@ class GroceryApp {
         if (tabName === 'categories') {
             this.updateCategorySelects();
         }
+        
+        if (tabName === 'products') {
+            this.updateCategorySelects();
+        }
 
         this.render();
     }
@@ -273,35 +728,73 @@ class GroceryApp {
             return;
         }
 
-        const newItem = {
-            id: Date.now(),
-            name: itemName,
-            category: category,
-            completed: false,
-            dateAdded: new Date().toISOString(),
-            fromStandard: false
-        };
+        // Find or create product in master list
+        let product = this.allProducts.find(p => 
+            p.name.toLowerCase() === itemName.toLowerCase() && 
+            p.category === category
+        );
 
-        this.shoppingItems.unshift(newItem);
+        if (product) {
+            // Update existing product
+            product.inShopping = true;
+            product.completed = false;
+        } else {
+            // Create new product
+            product = {
+                id: Date.now(),
+                name: itemName,
+                category: category,
+                inShopping: true,
+                inPantry: false,
+                inStock: false,
+                inSeason: true,
+                completed: false,
+                dateAdded: new Date().toISOString()
+            };
+            this.allProducts.push(product);
+        }
+
         this.itemInput.value = '';
         this.itemInput.focus();
-        this.saveShoppingItems();
+        this.saveAllProducts();
+        this.syncListsFromProducts();
         this.render();
     }
 
     toggleShoppingItem(id) {
-        const item = this.shoppingItems.find(item => item.id === id);
-        if (item) {
-            item.completed = !item.completed;
-            this.saveShoppingItems();
+        // Update in products master list
+        const product = this.allProducts.find(p => p.id === id);
+        if (product) {
+            const wasCompleted = product.completed;
+            product.completed = !product.completed;
+            
+            // If marking as completed and it's a pantry item, mark as in stock
+            if (product.completed && product.inPantry) {
+                product.inStock = true;
+                console.log(`✅ Marked ${product.name} as completed and back in stock`);
+            }
+            // If unmarking as completed and it's a pantry item, mark as out of stock
+            else if (!product.completed && wasCompleted && product.inPantry) {
+                product.inStock = false;
+                console.log(`❌ Unmarked ${product.name} as completed, now out of stock`);
+            }
+            
+            this.saveAllProducts();
+            this.syncListsFromProducts();
             this.render();
         }
     }
 
     deleteShoppingItem(id) {
-        this.shoppingItems = this.shoppingItems.filter(item => item.id !== id);
-        this.saveShoppingItems();
-        this.render();
+        // Update in products master list
+        const product = this.allProducts.find(p => p.id === id);
+        if (product) {
+            product.inShopping = false;
+            product.completed = false;
+            this.saveAllProducts();
+            this.syncListsFromProducts();
+            this.render();
+        }
     }
 
     markAsInStock(id) {
@@ -322,8 +815,22 @@ class GroceryApp {
     }
 
     clearCompleted() {
-        this.shoppingItems = this.shoppingItems.filter(item => !item.completed);
-        this.saveShoppingItems();
+        // Update products master list - remove completed items from shopping
+        this.allProducts.forEach(product => {
+            if (product.completed && product.inShopping) {
+                product.inShopping = false;
+                product.completed = false;
+                
+                // If it was a pantry item that was completed, keep it in stock
+                if (product.inPantry) {
+                    product.inStock = true;
+                    console.log(`🧹 Cleared completed ${product.name}, kept in pantry stock`);
+                }
+            }
+        });
+        
+        this.saveAllProducts();
+        this.syncListsFromProducts();
         this.render();
     }
 
@@ -337,55 +844,90 @@ class GroceryApp {
             return;
         }
 
-        // Check if item already exists
-        const existingItem = this.standardItems.find(item => 
-            item.name.toLowerCase() === itemName.toLowerCase() && 
-            item.category === category
+        // Find or create product in master list
+        let product = this.allProducts.find(p => 
+            p.name.toLowerCase() === itemName.toLowerCase() && 
+            p.category === category
         );
 
-        if (existingItem) {
-            alert('This item already exists in your pantry list!');
-            this.standardItemInput.value = '';
-            return;
+        if (product) {
+            // Update existing product
+            product.inPantry = true;
+            product.inStock = true;
+            product.inSeason = true;
+        } else {
+            // Create new product
+            product = {
+                id: Date.now(),
+                name: itemName,
+                category: category,
+                inShopping: false,
+                inPantry: true,
+                inStock: true,
+                inSeason: true,
+                completed: false,
+                dateAdded: new Date().toISOString()
+            };
+            this.allProducts.push(product);
         }
 
-        const newItem = {
-            id: Date.now(),
-            name: itemName,
-            category: category,
-            inStock: true,
-            dateAdded: new Date().toISOString()
-        };
-
-        this.standardItems.push(newItem);
         this.standardItemInput.value = '';
         this.standardItemInput.focus();
-        this.saveStandardItems();
+        this.saveAllProducts();
+        this.syncListsFromProducts();
         this.render();
     }
 
     toggleStandardItemStock(id) {
-        const item = this.standardItems.find(item => item.id === id);
-        if (item) {
-            item.inStock = !item.inStock;
+        // Update in products master list
+        const product = this.allProducts.find(p => p.id === id);
+        if (product && product.inPantry) {
+            product.inStock = !product.inStock;
             
-            // If marking as out of stock, add to shopping list
-            if (!item.inStock) {
-                this.addToShoppingFromStandard(item);
-            } else {
-                // If marking as in stock, remove from shopping list if it exists
-                this.removeFromShoppingIfExists(item);
+            // Only add to shopping list if item is in season
+            if (!product.inStock && product.inSeason !== false) {
+                product.inShopping = true;
+            } else if (product.inStock) {
+                // If marking as in stock, remove from shopping list
+                product.inShopping = false;
+                product.completed = false;
             }
             
-            this.saveStandardItems();
+            this.saveAllProducts();
+            this.syncListsFromProducts();
+            this.render();
+        }
+    }
+
+    toggleStandardItemSeason(id) {
+        // Update in products master list
+        const product = this.allProducts.find(p => p.id === id);
+        if (product && product.inPantry) {
+            product.inSeason = !product.inSeason;
+            // If moving out of season, automatically mark as not in stock
+            if (!product.inSeason) {
+                product.inStock = false;
+                product.inShopping = false;
+                product.completed = false;
+            }
+            
+            this.saveAllProducts();
+            this.syncListsFromProducts();
             this.render();
         }
     }
 
     deleteStandardItem(id) {
-        this.standardItems = this.standardItems.filter(item => item.id !== id);
-        this.saveStandardItems();
-        this.render();
+        // Update in products master list
+        const product = this.allProducts.find(p => p.id === id);
+        if (product) {
+            product.inPantry = false;
+            product.inStock = false;
+            product.inSeason = true;
+            this.saveAllProducts();
+            this.syncListsFromProducts();
+            this.render();
+        }
     }
 
     addToShoppingFromStandard(standardItem) {
@@ -419,7 +961,7 @@ class GroceryApp {
     }
 
     addAllUnstockedToShopping() {
-        const unstockedItems = this.standardItems.filter(item => !item.inStock);
+        const unstockedItems = this.standardItems.filter(item => !item.inStock && item.inSeason !== false);
         let addedCount = 0;
 
         unstockedItems.forEach(standardItem => {
@@ -454,8 +996,12 @@ class GroceryApp {
             this.renderShoppingList();
         } else if (this.currentTab === 'pantry') {
             this.renderStandardList();
+        } else if (this.currentTab === 'products') {
+            this.renderProductsList();
         } else if (this.currentTab === 'categories') {
             this.renderCategoriesList();
+        } else if (this.currentTab === 'sync') {
+            // Sync tab doesn't need dynamic rendering
         }
     }
 
@@ -511,16 +1057,28 @@ class GroceryApp {
             return;
         }
 
-        // Group by category and render
-        const groupedItems = this.groupItemsByCategory(this.standardItems);
-        const categoryOrder = this.getCategoryOrder();
-        
+        // Separate in-season and out-of-season items
+        const inSeasonItems = this.standardItems.filter(item => item.inSeason !== false);
+        const outOfSeasonItems = this.standardItems.filter(item => item.inSeason === false);
+
         let html = '';
-        categoryOrder.forEach(categoryKey => {
-            if (groupedItems[categoryKey] && groupedItems[categoryKey].length > 0) {
-                html += this.renderStandardCategorySection(categoryKey, groupedItems[categoryKey]);
-            }
-        });
+
+        // Render in-season items by category
+        if (inSeasonItems.length > 0) {
+            const groupedItems = this.groupItemsByCategory(inSeasonItems);
+            const categoryOrder = this.getCategoryOrder();
+            
+            categoryOrder.forEach(categoryKey => {
+                if (groupedItems[categoryKey] && groupedItems[categoryKey].length > 0) {
+                    html += this.renderStandardCategorySection(categoryKey, groupedItems[categoryKey]);
+                }
+            });
+        }
+
+        // Render out-of-season section at the bottom
+        if (outOfSeasonItems.length > 0) {
+            html += this.renderOutOfSeasonSection(outOfSeasonItems);
+        }
         
         this.standardList.innerHTML = html;
     }
@@ -539,14 +1097,15 @@ class GroceryApp {
         }
 
         this.categoriesList.innerHTML = sortedCategories.map((category, index) => `
-            <div class="category-item ${category.isDefault ? 'default' : ''}" data-category-id="${category.id}" data-index="${index}">
+            <div class="category-item" data-category-id="${category.id}" data-index="${index}">
                 <div class="category-drag-handle">⋮⋮</div>
-                <div class="category-info">
+                <div class="category-info" onclick="app.editCategory('${category.id}')" style="cursor: pointer;" title="Click to edit">
                     <div class="category-emoji">${category.emoji}</div>
                     <div class="category-name">${category.name.charAt(0).toUpperCase() + category.name.slice(1)}</div>
                 </div>
                 <div class="category-actions">
-                    <button class="delete-btn" onclick="app.deleteCategory('${category.id}')" ${category.isDefault ? 'disabled' : ''}>×</button>
+                    <button class="edit-category-btn" onclick="app.editCategory('${category.id}')" title="Edit category">✏️</button>
+                    <button class="delete-btn" onclick="app.deleteCategory('${category.id}')" title="Delete category">×</button>
                 </div>
             </div>
         `).join('');
@@ -606,22 +1165,33 @@ class GroceryApp {
     }
 
     renderStandardItem(item) {
+        // Default to in season for backward compatibility
+        const inSeason = item.inSeason !== undefined ? item.inSeason : true;
+        
         return `
-            <div class="stock-item ${item.inStock ? '' : 'out-of-stock'}" data-id="${item.id}">
+            <div class="stock-item ${item.inStock ? '' : 'out-of-stock'} ${!inSeason ? 'out-of-season' : ''}" data-id="${item.id}">
                 <input 
                     type="checkbox" 
                     class="stock-checkbox" 
                     ${item.inStock ? 'checked' : ''}
                     onchange="app.toggleStandardItemStock(${item.id})"
+                    title="In stock"
                 >
-                <div class="stock-content">
+                <div class="stock-content" onclick="app.editStandardItem(${item.id})" style="cursor: pointer;" title="Click to edit item name">
                     <div class="stock-name">${this.escapeHtml(item.name)}</div>
                     <div class="stock-status ${item.inStock ? 'in-stock' : 'out-of-stock'}">
                         ${item.inStock ? '✅ In Stock' : '❌ Out of Stock'}
                     </div>
                 </div>
                 <div class="stock-actions">
-                    ${!item.inStock ? `<button class="add-to-list-btn" onclick="app.addToShoppingFromStandard({id: ${item.id}, name: '${item.name}', category: '${item.category}'})" title="Add to shopping list">+</button>` : ''}
+                    <input 
+                        type="checkbox" 
+                        class="season-checkbox" 
+                        ${inSeason ? 'checked' : ''}
+                        onchange="app.toggleStandardItemSeason(${item.id})"
+                        title="In season"
+                    >
+                    ${!item.inStock && inSeason ? `<button class="add-to-list-btn" onclick="app.addToShoppingFromStandard({id: ${item.id}, name: '${item.name}', category: '${item.category}'})" title="Add to shopping list">+</button>` : ''}
                     <button class="edit-category-btn" onclick="app.openCategoryChangeModal(${item.id}, 'standard')" title="Change category">✏️</button>
                     <button class="delete-btn" onclick="app.deleteStandardItem(${item.id})">×</button>
                 </div>
@@ -630,13 +1200,20 @@ class GroceryApp {
     }
 
     groupItemsByCategory(items) {
-        return items.reduce((groups, item) => {
+        const groups = items.reduce((groups, item) => {
             if (!groups[item.category]) {
                 groups[item.category] = [];
             }
             groups[item.category].push(item);
             return groups;
         }, {});
+        
+        // Sort items alphabetically within each category
+        Object.keys(groups).forEach(category => {
+            groups[category].sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+        });
+        
+        return groups;
     }
 
     renderCategorySection(category, items) {
@@ -671,6 +1248,160 @@ class GroceryApp {
         `;
     }
 
+    renderOutOfSeasonSection(items) {
+        return `
+            <div class="out-of-season-section">
+                <div class="out-of-season-header">
+                    <span class="out-of-season-title">🌐 Out of Season</span>
+                    <span class="out-of-season-count">${items.length}</span>
+                </div>
+                <div class="out-of-season-items">
+                    ${items.map(item => this.renderStandardItem(item)).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    renderProductsList() {
+        console.log('🔍 Rendering products list, total products:', this.allProducts.length);
+        
+        const searchTerm = this.productSearchInput ? this.productSearchInput.value.trim().toLowerCase() : '';
+        let filteredProducts = this.allProducts;
+
+        if (searchTerm) {
+            filteredProducts = this.allProducts.filter(product =>
+                product.name.toLowerCase().includes(searchTerm) ||
+                product.category.toLowerCase().includes(searchTerm)
+            );
+        }
+
+        this.updateProductCount(filteredProducts.length);
+
+        if (this.allProducts.length === 0) {
+            if (this.productsList) {
+                this.productsList.innerHTML = `
+                    <div class="empty-state">
+                        <span class="emoji">📋</span>
+                        <p>Your products list is empty</p>
+                        <p>Add products that you might need for recipes and menus!</p>
+                    </div>
+                `;
+            }
+            return;
+        }
+
+        if (filteredProducts.length === 0) {
+            if (this.productsList) {
+                this.productsList.innerHTML = `
+                    <div class="empty-state">
+                        <span class="emoji">🔍</span>
+                        <p>No products found</p>
+                        <p>Try a different search term</p>
+                    </div>
+                `;
+            }
+            return;
+        }
+
+        // Group by category and render
+        const groupedProducts = this.groupItemsByCategory(filteredProducts);
+        const categoryOrder = this.getCategoryOrder();
+        
+        let html = '';
+        categoryOrder.forEach(categoryKey => {
+            if (groupedProducts[categoryKey] && groupedProducts[categoryKey].length > 0) {
+                html += this.renderProductCategorySection(categoryKey, groupedProducts[categoryKey]);
+            }
+        });
+        
+        if (this.productsList) {
+            this.productsList.innerHTML = html;
+            console.log('✅ Products list rendered with', filteredProducts.length, 'products');
+        } else {
+            console.error('❌ Products list element not found!');
+        }
+    }
+
+    renderProductCategorySection(category, products) {
+        const categoryData = this.categories.find(cat => cat.id === category);
+        const categoryName = categoryData ? categoryData.name.charAt(0).toUpperCase() + categoryData.name.slice(1) : category;
+        const categoryEmoji = categoryData ? categoryData.emoji : '📦';
+        
+        return `
+            <div class="category-section">
+                <div class="category-header">
+                    <span class="category-title">${categoryEmoji} ${categoryName}</span>
+                    <span class="category-count">${products.length}</span>
+                </div>
+                <div class="category-items">
+                    ${products.map(product => this.renderProduct(product)).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    renderProduct(product) {
+        const status = this.getProductStatus(product);
+        const statusIndicators = [];
+        
+        if (status.inShopping) statusIndicators.push('🛒 Shopping');
+        if (status.inPantry) statusIndicators.push('🏠 Pantry');
+        if (status.inStock) statusIndicators.push('✅ Stock');
+        if (status.inPantry && !status.inStock) statusIndicators.push('<span class="status-nostock">❌ NoStock</span>');
+        if (status.inSeason) statusIndicators.push('🌱 Season');
+        if (!status.inSeason) statusIndicators.push('<span class="status-notseason">🚫 NotSeason</span>');
+        
+        const statusText = statusIndicators.length > 0 ? statusIndicators.join(' • ') : '📋 Available';
+        
+        return `
+            <div class="product-item ${status.inShopping ? 'in-shopping' : ''} ${status.inPantry ? 'in-pantry' : ''}" data-id="${product.id}">
+                <div class="product-checkboxes">
+                    <label class="product-checkbox-label" title="Add to shopping list">
+                        <input 
+                            type="checkbox" 
+                            class="product-checkbox shopping-checkbox" 
+                            ${status.inShopping ? 'checked' : ''}
+                            onchange="app.toggleProductShopping(${product.id})"
+                        >
+                        <span class="checkbox-text">🛒</span>
+                    </label>
+                    <label class="product-checkbox-label" title="Add to pantry">
+                        <input 
+                            type="checkbox" 
+                            class="product-checkbox pantry-checkbox" 
+                            ${status.inPantry ? 'checked' : ''}
+                            onchange="app.toggleProductPantry(${product.id})"
+                        >
+                        <span class="checkbox-text">🏠</span>
+                    </label>
+                </div>
+                <div class="product-content" onclick="app.editProduct(${product.id})" style="cursor: pointer;" title="Click to edit product name">
+                    <div class="product-name">${this.escapeHtml(product.name)}</div>
+                    <div class="product-status">${statusText}</div>
+                </div>
+                <div class="product-actions">
+                    <button class="edit-category-btn" onclick="app.openCategoryChangeModal(${product.id}, 'product')" title="Change category">✏️</button>
+                    <button class="delete-btn" onclick="app.deleteProduct(${product.id})" title="Delete product">×</button>
+                </div>
+            </div>
+        `;
+    }
+
+    updateProductCount(filteredCount = null) {
+        if (this.productCount) {
+            this.productCount.textContent = `${this.allProducts.length} products`;
+        }
+        
+        if (this.filteredCount) {
+            if (filteredCount !== null && filteredCount !== this.allProducts.length) {
+                this.filteredCount.textContent = `${filteredCount} shown`;
+                this.filteredCount.style.display = 'inline';
+            } else {
+                this.filteredCount.style.display = 'none';
+            }
+        }
+    }
+
     renderShoppingItem(item, showCategory = false) {
         const categoryData = this.categories.find(cat => cat.id === item.category);
         const categoryEmoji = categoryData ? categoryData.emoji : '📦';
@@ -683,7 +1414,7 @@ class GroceryApp {
                     ${item.completed ? 'checked' : ''}
                     onchange="app.toggleShoppingItem(${item.id})"
                 >
-                <div class="item-content">
+                <div class="item-content" onclick="app.editShoppingItem(${item.id})" style="cursor: pointer;" title="Click to edit item name">
                     <div class="item-name">${this.escapeHtml(item.name)}</div>
                     ${showCategory ? `<div class="item-category-small">${categoryEmoji} ${item.category}</div>` : ''}
                 </div>
@@ -701,6 +1432,13 @@ class GroceryApp {
         return items.sort((a, b) => {
             const aIndex = categoryOrder.indexOf(a.category);
             const bIndex = categoryOrder.indexOf(b.category);
+            
+            // If same category, sort alphabetically by name
+            if (aIndex === bIndex) {
+                return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
+            }
+            
+            // Otherwise sort by category order
             return aIndex - bIndex;
         });
     }
@@ -773,6 +1511,12 @@ class GroceryApp {
                 items = this.getSamplePantryItems();
                 localStorage.setItem('standardItems_initialized', 'true');
                 console.log('📱 New user - loaded sample pantry items');
+            } else if (items.length > 0) {
+                // Ensure backward compatibility - add inSeason property if missing
+                items = items.map(item => ({
+                    ...item,
+                    inSeason: item.inSeason !== undefined ? item.inSeason : true
+                }));
             }
             
             console.log(`📦 Loaded ${items.length} pantry items from localStorage`);
@@ -802,6 +1546,41 @@ class GroceryApp {
         }
     }
 
+    loadAllProducts() {
+        try {
+            let saved = localStorage.getItem('allProducts');
+            
+            // Try backup if main data is corrupted
+            if (!saved || saved === 'null') {
+                saved = localStorage.getItem('allProducts_backup');
+                console.log('Loaded products from localStorage backup');
+            }
+            
+            let products = saved ? JSON.parse(saved) : [];
+            
+            // Provide sample data for new users
+            if (products.length === 0 && !localStorage.getItem('allProducts_initialized')) {
+                products = this.getSampleProducts();
+                localStorage.setItem('allProducts_initialized', 'true');
+                console.log('📱 New user - loaded sample products:', products.length);
+                // Save sample products immediately
+                try {
+                    const data = JSON.stringify(products);
+                    localStorage.setItem('allProducts', data);
+                    localStorage.setItem('allProducts_backup', data);
+                } catch (e) {
+                    console.error('Could not save sample products:', e);
+                }
+            }
+            
+            console.log(`📋 Loaded ${products.length} products from localStorage`);
+            return products;
+        } catch (e) {
+            console.error('Could not load products from localStorage:', e);
+            return this.getSampleProducts();
+        }
+    }
+
     saveShoppingItems() {
         try {
             const data = JSON.stringify(this.shoppingItems);
@@ -825,6 +1604,19 @@ class GroceryApp {
         } catch (e) {
             console.error('Could not save standard items to localStorage:', e);
             this.showPersistenceError('pantry items');
+        }
+    }
+
+    saveAllProducts() {
+        try {
+            const data = JSON.stringify(this.allProducts);
+            localStorage.setItem('allProducts', data);
+            localStorage.setItem('allProducts_backup', data);
+            localStorage.setItem('allProducts_timestamp', new Date().toISOString());
+            console.log(`💾 Saved ${this.allProducts.length} products to localStorage`);
+        } catch (e) {
+            console.error('Could not save products to localStorage:', e);
+            this.showPersistenceError('products');
         }
     }
 
@@ -877,6 +1669,7 @@ class GroceryApp {
                 name: "Rice",
                 category: "pantry",
                 inStock: true,
+                inSeason: true,
                 dateAdded: new Date().toISOString()
             },
             {
@@ -884,6 +1677,7 @@ class GroceryApp {
                 name: "Milk",
                 category: "dairy",
                 inStock: false,
+                inSeason: true,
                 dateAdded: new Date().toISOString()
             },
             {
@@ -891,6 +1685,7 @@ class GroceryApp {
                 name: "Apples",
                 category: "produce",
                 inStock: true,
+                inSeason: true,
                 dateAdded: new Date().toISOString()
             },
             {
@@ -898,8 +1693,70 @@ class GroceryApp {
                 name: "Chicken Breast",
                 category: "meat",
                 inStock: false,
+                inSeason: true,
+                dateAdded: new Date().toISOString()
+            },
+            {
+                id: Date.now() + 104,
+                name: "Strawberries",
+                category: "produce",
+                inStock: false,
+                inSeason: false,
                 dateAdded: new Date().toISOString()
             }
+        ];
+    }
+
+    getSampleProducts() {
+        const baseProduct = {
+            inShopping: false,
+            inPantry: false,
+            inStock: false,
+            inSeason: true,
+            completed: false,
+            dateAdded: new Date().toISOString()
+        };
+
+        return [
+            // Common produce
+            {id: Date.now() + 200, name: "Onions", category: "produce", ...baseProduct},
+            {id: Date.now() + 201, name: "Garlic", category: "produce", ...baseProduct},
+            {id: Date.now() + 202, name: "Carrots", category: "produce", ...baseProduct},
+            {id: Date.now() + 203, name: "Celery", category: "produce", ...baseProduct},
+            {id: Date.now() + 204, name: "Potatoes", category: "produce", ...baseProduct},
+            {id: Date.now() + 205, name: "Tomatoes", category: "produce", ...baseProduct},
+            {id: Date.now() + 206, name: "Bell Peppers", category: "produce", ...baseProduct},
+            {id: Date.now() + 207, name: "Mushrooms", category: "produce", ...baseProduct},
+            {id: Date.now() + 208, name: "Lemons", category: "produce", ...baseProduct},
+            {id: Date.now() + 209, name: "Fresh Herbs", category: "produce", ...baseProduct},
+            
+            // Pantry staples
+            {id: Date.now() + 210, name: "Olive Oil", category: "pantry", ...baseProduct},
+            {id: Date.now() + 211, name: "Salt", category: "pantry", ...baseProduct},
+            {id: Date.now() + 212, name: "Black Pepper", category: "pantry", ...baseProduct},
+            {id: Date.now() + 213, name: "Flour", category: "pantry", ...baseProduct},
+            {id: Date.now() + 214, name: "Sugar", category: "pantry", ...baseProduct},
+            {id: Date.now() + 215, name: "Pasta", category: "pantry", ...baseProduct},
+            {id: Date.now() + 216, name: "Canned Tomatoes", category: "pantry", ...baseProduct},
+            {id: Date.now() + 217, name: "Stock/Broth", category: "pantry", ...baseProduct},
+            {id: Date.now() + 218, name: "Vinegar", category: "pantry", ...baseProduct},
+            {id: Date.now() + 219, name: "Spices Mix", category: "pantry", ...baseProduct},
+            
+            // Dairy & proteins
+            {id: Date.now() + 220, name: "Eggs", category: "dairy", ...baseProduct},
+            {id: Date.now() + 221, name: "Butter", category: "dairy", ...baseProduct},
+            {id: Date.now() + 222, name: "Cheese", category: "dairy", ...baseProduct},
+            {id: Date.now() + 223, name: "Ground Beef", category: "meat", ...baseProduct},
+            {id: Date.now() + 224, name: "Chicken Thighs", category: "meat", ...baseProduct},
+            {id: Date.now() + 225, name: "Fish Fillets", category: "meat", ...baseProduct},
+            
+            // Bakery
+            {id: Date.now() + 226, name: "Sandwich Bread", category: "bakery", ...baseProduct},
+            {id: Date.now() + 227, name: "Dinner Rolls", category: "bakery", ...baseProduct},
+            
+            // Frozen
+            {id: Date.now() + 228, name: "Frozen Vegetables", category: "frozen", ...baseProduct},
+            {id: Date.now() + 229, name: "Ice Cream", category: "frozen", ...baseProduct}
         ];
     }
 
@@ -954,12 +1811,6 @@ class GroceryApp {
     handleFileImport(event) {
         const file = event.target.files[0];
         if (!file) return;
-        
-        // Check filename
-        if (file.name !== 'grocery-data.json') {
-            alert('Please select the "grocery-data.json" file exported from another device.');
-            return;
-        }
         
         this.importDataBtn.disabled = true;
         this.importDataBtn.textContent = '📥 Importing...';
