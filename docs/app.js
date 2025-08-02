@@ -26,9 +26,11 @@ class GroceryApp {
         this.syncListsFromProducts();
         
         this.render();
+        this.updateDeviceInfo();
         
         console.log('🛒 Grocery Manager initialized with localStorage');
         console.log(`📊 Data loaded: ${this.shoppingItems.length} shopping items, ${this.standardItems.length} pantry items, ${this.categories.length} categories, ${this.allProducts.length} products`);
+        console.log(`📱 Device: ${this.getDeviceInfo()}`);
     }
 
     initializeDefaultCategories() {
@@ -47,6 +49,9 @@ class GroceryApp {
     }
 
     initializeElements() {
+        // Header elements
+        this.refreshBtn = document.getElementById('refreshBtn');
+        
         // Tab elements
         this.tabButtons = document.querySelectorAll('.tab-button');
         this.tabContents = document.querySelectorAll('.tab-content');
@@ -110,6 +115,9 @@ class GroceryApp {
     }
 
     attachEventListeners() {
+        // Header events
+        this.refreshBtn.addEventListener('click', () => this.hardRefresh());
+        
         // Tab switching
         this.tabButtons.forEach(button => {
             button.addEventListener('click', (e) => this.switchTab(e.target.dataset.tab));
@@ -1466,6 +1474,71 @@ class GroceryApp {
         return div.innerHTML;
     }
 
+    getDeviceInfo() {
+        const userAgent = navigator.userAgent;
+        
+        // Detect device type
+        if (/iPad/.test(userAgent)) {
+            return 'iPad';
+        } else if (/iPhone/.test(userAgent)) {
+            return 'iPhone';
+        } else if (/Macintosh/.test(userAgent)) {
+            return 'Mac';
+        } else if (/Android/.test(userAgent)) {
+            return /Mobile/.test(userAgent) ? 'Android Phone' : 'Android Tablet';
+        } else if (/Mobile/.test(userAgent)) {
+            return 'Mobile';
+        } else {
+            return 'Desktop';
+        }
+    }
+
+    isLargeScreen() {
+        // Consider Mac and iPad as large screens for future recipe/menu management
+        const deviceInfo = this.getDeviceInfo();
+        return deviceInfo === 'Mac' || deviceInfo === 'iPad' || deviceInfo === 'Desktop';
+    }
+
+    isMobileDevice() {
+        const deviceInfo = this.getDeviceInfo();
+        return deviceInfo === 'iPhone' || deviceInfo === 'Android Phone' || deviceInfo === 'Mobile';
+    }
+
+    updateDeviceInfo() {
+        const deviceInfo = this.getDeviceInfo();
+        const header = document.querySelector('header h1');
+        
+        if (header) {
+            const deviceEmoji = {
+                'iPhone': '📱',
+                'iPad': '📱', 
+                'Mac': '💻',
+                'Android Phone': '📱',
+                'Android Tablet': '📱',
+                'Desktop': '💻',
+                'Mobile': '📱'
+            };
+            
+            header.innerHTML = `${deviceEmoji[deviceInfo] || '🛒'} Grocery Manager`;
+            
+            // Add device class to body for CSS targeting
+            document.body.className = `device-${deviceInfo.toLowerCase().replace(' ', '-')}`;
+        }
+    }
+
+    hardRefresh() {
+        console.log('🔄 Performing hard refresh (Cmd+Shift+R equivalent)');
+        // Clear all caches and reload
+        if ('caches' in window) {
+            caches.keys().then(names => {
+                names.forEach(name => caches.delete(name));
+            });
+        }
+        
+        // Force reload bypassing cache
+        window.location.reload(true);
+    }
+
     // Storage Methods - Pure localStorage with Sample Data for New Users
     loadShoppingItems() {
         try {
@@ -1775,10 +1848,11 @@ class GroceryApp {
                 shoppingItems: this.shoppingItems,
                 standardItems: this.standardItems,
                 categories: this.categories,
+                allProducts: this.allProducts,
                 exportDate: new Date().toISOString(),
                 exportTime: new Date().toLocaleString(),
-                version: '1.0',
-                deviceInfo: navigator.userAgent.includes('Mobile') ? 'Mobile' : 'Desktop'
+                version: '1.1',
+                deviceInfo: this.getDeviceInfo()
             };
             
             const dataStr = JSON.stringify(exportData, null, 2);
@@ -1853,11 +1927,13 @@ class GroceryApp {
             if (data.shoppingItems) this.shoppingItems = data.shoppingItems;
             if (data.standardItems) this.standardItems = data.standardItems;
             if (data.categories) this.categories = data.categories;
+            if (data.allProducts) this.allProducts = data.allProducts;
             
             // Save to localStorage
             this.saveShoppingItems();
             this.saveStandardItems();
             this.saveCategories();
+            this.saveAllProducts();
             
             // Update UI
             this.updateCategorySelects();
@@ -1869,6 +1945,7 @@ class GroceryApp {
             alert(`Data imported ${importInfo}${deviceInfo}!\n\n` +
                   `📦 Shopping items: ${data.shoppingItems?.length || 0}\n` +
                   `🏠 Pantry items: ${data.standardItems?.length || 0}\n` +
+                  `📋 Products: ${data.allProducts?.length || 0}\n` +
                   `📂 Categories: ${data.categories?.length || 0}`);
             
             console.log('📥 Data imported successfully:', data);

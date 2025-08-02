@@ -20,16 +20,95 @@ body {
     overflow: hidden;
 }
 
+/* Large screen layout for Mac and iPad */
+@media (min-width: 768px) {
+    .container {
+        max-width: 800px;
+        border-radius: 15px;
+    }
+    
+    body {
+        padding: 30px;
+    }
+    
+    header h1 {
+        font-size: 2em;
+    }
+    
+    main {
+        padding: 40px 30px;
+    }
+    
+    .tab-navigation {
+        justify-content: center;
+        gap: 5px;
+    }
+    
+    .tab-button {
+        min-width: 60px;
+        padding: 15px 20px;
+        font-size: 18px;
+    }
+}
+
+/* Extra large screens (Mac desktop) */
+@media (min-width: 1200px) {
+    .container {
+        max-width: 1000px;
+    }
+    
+    /* Prepare for future recipe/menu management with wider layouts */
+    .large-screen-layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+    }
+}
+
 header {
     background: #2c3e50;
     color: white;
     padding: 15px 20px;
-    text-align: center;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    position: relative;
 }
 
 header h1 {
     font-size: 1.5em;
     font-weight: 300;
+    margin: 0;
+}
+
+.refresh-btn {
+    position: absolute;
+    right: 0;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.refresh-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: rotate(180deg);
+}
+
+.refresh-btn:active {
+    transform: rotate(180deg) scale(0.95);
 }
 
 /* Tab Navigation */

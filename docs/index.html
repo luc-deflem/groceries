@@ -8,13 +8,16 @@
     <meta name="apple-mobile-web-app-title" content="Grocery List">
     <link rel="apple-touch-icon" href="icon-192.png">
     <link rel="manifest" href="manifest.json">
-    <title>Grocery List MVP 0.3</title>
+    <title>Grocery List MVP</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🛒 Grocery Manager</h1>
+            <div class="header-content">
+                <h1>🛒 Grocery Manager</h1>
+                <button id="refreshBtn" class="refresh-btn" title="Hard Refresh (Cmd+Shift+R)">🔄</button>
+            </div>
         </header>
         
         <nav class="tab-navigation">
@@ -122,14 +125,23 @@
             <!-- Sync Tab -->
             <div class="tab-content" id="sync-tab">
                 <div class="sync-section">
-                    <h3>📱 Device Sync</h3>
+                    <h3>📱 Cross-Device Sync</h3>
                     <div class="sync-actions">
-                        <button id="exportDataBtn" class="sync-btn">📤 Export to "grocery-data.json"</button>
-                        <button id="importDataBtn" class="sync-btn secondary">📥 Import from "grocery-data.json"</button>
+                        <button id="exportDataBtn" class="sync-btn">📤 Export Data</button>
+                        <button id="importDataBtn" class="sync-btn secondary">📥 Import Data</button>
                         <input type="file" id="importFileInput" accept=".json" style="display: none;">
                     </div>
                     <div class="sync-info">
-                        <p><small>Export on one device, then import on another to sync your grocery lists and pantry.</small></p>
+                        <h4>🍳 Multi-Device Workflow:</h4>
+                        <p><strong>📱 iPhone:</strong> Perfect for shopping - quick access to lists in-store</p>
+                        <p><strong>💻 Mac & iPad:</strong> Ideal for menu planning, recipe management, and data entry</p>
+                        <br>
+                        <h4>📊 How to Sync:</h4>
+                        <p><strong>1. Export:</strong> Use 📤 Export on your current device to save all data</p>
+                        <p><strong>2. Transfer:</strong> Share the "grocery-data.json" file via iCloud, email, or AirDrop</p>
+                        <p><strong>3. Import:</strong> Use 📥 Import on your other device to load the data</p>
+                        <br>
+                        <p><small><em>💡 Tip: Export from your main device (Mac/iPad) regularly and import to iPhone before shopping</em></small></p>
                     </div>
                 </div>
             </div>
